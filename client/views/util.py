@@ -16,7 +16,7 @@ COLOR = {
     'background-color' : (49, 46, 43)
 }
 
-WIDTH = 1200
+WIDTH = 1500
 HEIGHT = 800
 HEADER_WIDTH = 200
 HEADER_HEIGHT = 800
