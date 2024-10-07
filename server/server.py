@@ -122,7 +122,6 @@ class Server:
         self.server_socket.close()
         for client_socket in self.clients.values():
             client_socket.close()
-            print("hehe")
 
 if __name__ == '__main__':
     server = Server()
