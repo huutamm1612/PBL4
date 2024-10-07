@@ -28,8 +28,15 @@ class View(ABC):
         self.surface = surface
         super().__init__()
 
-    
+    @abstractmethod
+    def repaint(self):
+        pass
 
+    @abstractmethod
+    def listener(self, event):
+        pass
+
+    
 def resize(img, new_size: tuple):
     return pygame.transform.smoothscale(img, new_size)
 

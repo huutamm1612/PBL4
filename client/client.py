@@ -2,11 +2,9 @@ import pygame
 import socket
 import pickle
 import threading
-from utils import *
+from views import *
 
 class MainScreen(View):
-    broad_img = resize(pygame.image.load('client/images/broad_img.png'), (550, 550))
-
     def __init__(self, client_socket, surface: pygame.Surface = None) -> None:
         super().__init__(client_socket, surface)
 
@@ -22,7 +20,7 @@ class MainScreen(View):
         self.surface = self.layout.subsurface(pygame.Rect(self.header_width, 0, self.width - self.header_width, self.height))
         self.surface.fill(COLOR['background-color'])
         self.header_layout.fill(COLOR['header-color'])
-        self.page = self
+        self.page = HomePage(client_socket, self.surface)
 
         self.buttons = [
             Button((0, 0, self.header_width, 50), id='home', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
@@ -36,8 +34,6 @@ class MainScreen(View):
         self.screen.blit(self.header_layout, (0, 0))
 
     def repaint(self):
-        self.surface.blit(self.broad_img, (100, 125))
-
         pass
 
     def listener_button(self, event):
