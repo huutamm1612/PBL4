@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import ndarray
+from ai import AI
 from chess_piece import *
 
 def to_string(chess_piece):
@@ -32,12 +33,13 @@ class Player:
         self.curr = ()
 
 class Game:
-    def __init__(self, players: Player, time=600) -> None:
+    def __init__(self, players: Player, time=600, play_com=False) -> None:
         self.game_init()
         
         self.all_move_info = []
         self.players = players # 0: white, 1: black
         self.time = time
+        self.play_com = play_com
         self.break_check = []
         
         self.white_turn = True
@@ -127,7 +129,7 @@ class Game:
             if p.client_address == client_address:
                 player = p
 
-        return player
+        return player   
     
     def is_check(self, player):
         self.break_check = []
@@ -245,6 +247,31 @@ class Game:
         if type(chess_piece) in [King, Pawn, Rook]:
             chess_piece.is_moved = True
 
+    def ai_move(self):
+        print(self.break_check)
+        start, goal = AI.move(self.matrix, self.break_check)
+        
+        chess_piece = self.get_chess_piece_from_pos(start)
+        if self.get_chess_piece_from_pos(goal) is not None:
+            self.all_move_info.append(str(chess_piece) + 'x' + pos_to_index(goal))
+            self.chess_pieces.remove(self.get_chess_piece_from_pos(goal))
+            self.matrix[goal] = 0
+        else:
+            self.all_move_info.append(str(chess_piece) + pos_to_index(goal))
+
+        self.move_chess(start, goal)
+
+        if self.is_check(self.players[1]):
+            self.is_white_checked = self.white_turn
+            if self.is_checkmate(self.players[1]):
+                self.all_move_info[-1] += '#'
+            else:
+                self.all_move_info[-1] += '+'
+        else:
+            self.is_white_checked = None
+    
+        self.white_turn = not self.white_turn
+        return self.all_move_info[-1]
 
     def take(self, goal, client_address):
         player = self.get_player(client_address)
@@ -279,7 +306,3 @@ class Game:
                     return False
                 
         return True
-
-if __name__ == '__main__':
-    game = Game()
-    print(game.matrix)
