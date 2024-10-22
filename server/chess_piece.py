@@ -58,12 +58,18 @@ def can_move(start, goal, matrix: ndarray):
 
     if matrix[start] > 0:
         is_white = True
-        coor = np.where(matrix == 1)
-        king_pos = (coor[0][0], coor[1][0])
+        if matrix[start] == 1:
+            king_pos = goal
+        else:
+            coor = np.where(matrix == 1)
+            king_pos = (coor[0][0], coor[1][0])
     else:
         is_white = False
-        coor = np.where(matrix == -1)
-        king_pos = (coor[0][0], coor[1][0])
+        if matrix[start] == -1:
+            king_pos = goal
+        else:
+            coor = np.where(matrix == -1)
+            king_pos = (coor[0][0], coor[1][0])
 
     opp_chesses = get_opp_chesses(is_white, matrix)
     
@@ -96,6 +102,16 @@ class ChessPiece(ABC):
         # Kiểm tra xem quân cờ ở vị trí 'pos' có đang tấn công tại vị trí 'goal' hay không
         pass
 
+    @staticmethod
+    @abstractmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def to_opp_king(pos: tuple, opp_king_pos:tuple):
+        pass
+
     @abstractmethod
     def way_to_opp_king(self, opp_king_pos: tuple) -> list:
         # Trả về tọa độ các vị trí từ quân cờ 'self' đến quân vua của đối thủ
@@ -107,6 +123,7 @@ class ChessPiece(ABC):
     def possible_moves(self, matrix: ndarray) -> list:
         # Trả về tất cả các vị trí mà quân cờ 'self' có thể đi đến (kể cả ăn quân đối thủ)
         pass
+
 
 
 class King(ChessPiece):
@@ -126,6 +143,9 @@ class King(ChessPiece):
             return 'wK' + pos_to_index(self.pos)
         return 'bK' + pos_to_index(self.pos)
             
+    @staticmethod
+    def to_opp_king(pos, opp_king_pos):
+        return []
 
     @staticmethod
     def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
@@ -134,23 +154,28 @@ class King(ChessPiece):
                 return True
         
         return False
+    
+    @staticmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
+        pos_can_moves = []
+        pos_can_takes = []
+
+        for index in King.around:
+            new_pos = (pos[0] + index[0], pos[1] + index[1])
+            if new_pos[0] >= 0 and new_pos[0] < 8 and new_pos[1] >= 0 and new_pos[1] < 8:
+                if can_move(pos, new_pos, matrix):
+                    if matrix[new_pos] == 0:
+                        pos_can_moves.append(new_pos)
+                    elif matrix[pos] * matrix[new_pos] < 0:
+                        pos_can_takes.append(new_pos)
+                
+        return [pos_can_moves, pos_can_takes]
 
     def way_to_opp_king(self, opp_king_pos: tuple) -> list:
         return []
     
     def possible_moves(self, matrix: ndarray) -> list:
-        pos_can_moves = []
-        pos_can_takes = []
-        
-        for index in King.around:
-            new_pos = (self.pos[0] + index[0], self.pos[1] + index[1])
-            if new_pos[0] >= 0 and new_pos[0] < 8 and new_pos[1] >= 0 and new_pos[1] < 8:
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                elif matrix[self.pos] * matrix[new_pos] < 0:
-                    pos_can_takes.append(new_pos)
-                
-        return [pos_can_moves, pos_can_takes]
+        return King.get_possible_move(self.pos, matrix)
 
 class Queen(ChessPiece):
     def __init__(self, pos: tuple, is_white: bool) -> None:
@@ -161,178 +186,35 @@ class Queen(ChessPiece):
         if self.is_white:
             return 'wQ' + pos_to_index(self.pos)
         return 'bQ' + pos_to_index(self.pos)
+    
+    @staticmethod
+    def to_opp_king(pos, opp_king_pos):
+        r = Rook.to_opp_king(pos, opp_king_pos)
+        r.extend(Bishop.to_opp_king(pos, opp_king_pos))
+        return r
 
     @staticmethod
     def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
         return Bishop.is_attack_at(pos, goal, matrix) or Rook.is_attack_at(pos, goal, matrix)
+    
+    @staticmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
+        possible_move1 = Bishop.get_possible_move(pos, matrix)
+        possible_move2 = Rook.get_possible_move(pos, matrix)
+        possible_move1[0].extend(possible_move2[0])
+        possible_move1[1].extend(possible_move2[1])
+        
+        return possible_move1
 
     def way_to_opp_king(self, opp_king_pos: tuple) -> list:
-        result = [self.pos]
-
-        if opp_king_pos[0] > self.pos[0]:
-            for i in range(1, 8):
-                position = (self.pos[0] + i, self.pos[1])
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-        
-        elif opp_king_pos[0] < self.pos[0]:
-            for i in range(1, 8):
-                position = (self.pos[0] - i, self.pos[1])
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-
-        elif opp_king_pos[1] > self.pos[1]:
-            for i in range(1, 8):
-                position = (self.pos[0], self.pos[1] + i)
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-
-        elif opp_king_pos[1] < self.pos[1]:
-            for i in range(1, 8):
-                position = (self.pos[0], self.pos[1] - i)
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-
-        if opp_king_pos[0] > self.pos[0] and opp_king_pos[1] > self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] + i, self.pos[1] + i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        elif opp_king_pos[0] > self.pos[1] and opp_king_pos[1] < self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] + i, self.pos[1] - i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        elif opp_king_pos[0] < self.pos[1] and opp_king_pos[1] < self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] - i, self.pos[1] - i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        elif opp_king_pos[0] < self.pos[1] and opp_king_pos[1] > self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] - i, self.pos[1] + i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        return result
+        return Queen.to_opp_king(self.pos, opp_king_pos)
     
     def possible_moves(self, matrix: ndarray) -> list:
-        pos_can_moves = []
-        pos_can_takes = []
-
-        for i in range(1, 8):
-            new_pos = (self.pos[0] + i, self.pos[1] + i)
-            if 8 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-
-        for i in range(1, 8):
-            new_pos = (self.pos[0] + i, self.pos[1] - i)
-            if 8 in new_pos or -1 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-
-        for i in range(1, 8):
-            new_pos = (self.pos[0] - i, self.pos[1] - i)
-            if -1 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-
-        for i in range(1, 8):
-            new_pos = (self.pos[0] - i, self.pos[1] + i)
-            if 8 in new_pos or -1 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-        
-        for i in range(1, 8):
-            new_pos = (self.pos[0] + i, self.pos[1])
-            if 8 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-                    
-        for i in range(1, 8):
-            new_pos = (self.pos[0] - i, self.pos[1])
-            if -1 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-                    
-        for i in range(1, 8):
-            new_pos = (self.pos[0], self.pos[1] + i)
-            if 8 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-                    
-        for i in range(1, 8):
-            new_pos = (self.pos[0], self.pos[1] - i)
-            if -1 in new_pos:
-                break
-            if can_move(self.pos, new_pos, matrix):
-                if matrix[new_pos] == 0:
-                    pos_can_moves.append(new_pos)
-                    continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
-                    pos_can_takes.append(new_pos)
-                break
-
-        return [pos_can_moves, pos_can_takes]
+        return Queen.get_possible_move(self.pos, matrix)
 
 class Bishop(ChessPiece):
     def __init__(self, pos: tuple, is_white: bool) -> None:
         super().__init__(pos, is_white)
-
 
     def __str__(self) -> str:
         if self.is_white:
@@ -340,16 +222,46 @@ class Bishop(ChessPiece):
         return 'bB' + pos_to_index(self.pos)
     
     @staticmethod
-    def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
-        col = pos[1]
-        row = pos[0]
+    def to_opp_king(pos, opp_king_pos):        
+        result = [pos]
+        if opp_king_pos[0] > pos[0] and opp_king_pos[1] > pos[1]:
+            for i in range(1, 8):
+                possition = (pos[0] + i, pos[1] + i)
+                if opp_king_pos == possition:
+                    return result
+                result.append(possition)
 
+        elif opp_king_pos[0] > pos[1] and opp_king_pos[1] < pos[1]:
+            for i in range(1, 8):
+                possition = (pos[0] + i, pos[1] - i)
+                if opp_king_pos == possition:
+                    return result
+                result.append(possition)
+
+        elif opp_king_pos[0] < pos[1] and opp_king_pos[1] < pos[1]:
+            for i in range(1, 8):
+                possition = (pos[0] - i, pos[1] - i)
+                if opp_king_pos == possition:
+                    return result
+                result.append(possition)
+
+        elif opp_king_pos[0] < pos[1] and opp_king_pos[1] > pos[1]:
+            for i in range(1, 8):
+                possition = (pos[0] - i, pos[1] + i)
+                if opp_king_pos == possition:
+                    return result
+                result.append(possition)
+
+        return result
+    
+    @staticmethod
+    def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
         # Chéo lên bên phải
         for i in range(1, 8):
             new_pos = (pos[0] + i, pos[1] + i)
             if new_pos == goal:
                 return True
-            if 8 in new_pos or matrix[new_pos] != 0:
+            if new_pos[0] == 8 or new_pos[1] == 8 or matrix[new_pos] != 0:
                 break
         
         # Chéo lên bên trái
@@ -357,7 +269,7 @@ class Bishop(ChessPiece):
             new_pos = (pos[0] + i, pos[1] - i)
             if new_pos == goal:
                 return True
-            if 8 in new_pos or -1 in new_pos or matrix[new_pos] != 0:
+            if new_pos[0] == 8 or new_pos[1] == -1 or matrix[new_pos] != 0:
                 break
             
         # Chéo xuống bên phải
@@ -365,7 +277,7 @@ class Bishop(ChessPiece):
             new_pos = (pos[0] - i, pos[1] + i)
             if new_pos == goal:
                 return True
-            if 8 in new_pos or -1 in new_pos or matrix[new_pos] != 0:
+            if new_pos[0] == -1 or new_pos[1] == 8 or matrix[new_pos] != 0:
                 break
             
         # Chéo xuống bên trái
@@ -373,97 +285,71 @@ class Bishop(ChessPiece):
             new_pos = (pos[0] - i, pos[1] - i)
             if new_pos == goal:
                 return True
-            if 8 in new_pos or -1 in new_pos or matrix[new_pos] != 0:
+            if new_pos[0] == -1 or new_pos[1] == -1 or matrix[new_pos] != 0:
                 break
 
         return False
-
-    def way_to_opp_king(self, opp_king_pos: tuple) -> list:
-        result = [self.pos]
-
-        if opp_king_pos[0] > self.pos[0] and opp_king_pos[1] > self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] + i, self.pos[1] + i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        elif opp_king_pos[0] > self.pos[1] and opp_king_pos[1] < self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] + i, self.pos[1] - i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        elif opp_king_pos[0] < self.pos[1] and opp_king_pos[1] < self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] - i, self.pos[1] - i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        elif opp_king_pos[0] < self.pos[1] and opp_king_pos[1] > self.pos[1]:
-            for i in range(1, 8):
-                possition = (self.pos[0] - i, self.pos[1] + i)
-                if opp_king_pos == possition:
-                    return result
-                result.append(possition)
-
-        return result
     
-    def possible_moves(self, matrix: ndarray) -> list:
+    @staticmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
         pos_can_moves = []
         pos_can_takes = []
 
         for i in range(1, 8):
-            new_pos = (self.pos[0] + i, self.pos[1] + i)
-            if 8 in new_pos:
+            new_pos = (pos[0] + i, pos[1] + i)
+            if new_pos[0] == 8 or new_pos[1] == 8:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
 
         for i in range(1, 8):
-            new_pos = (self.pos[0] + i, self.pos[1] - i)
-            if 8 in new_pos or -1 in new_pos:
+            new_pos = (pos[0] + i, pos[1] - i)
+            if new_pos[0] == 8 or new_pos[1] == -1:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
 
         for i in range(1, 8):
-            new_pos = (self.pos[0] - i, self.pos[1] - i)
-            if -1 in new_pos:
+            new_pos = (pos[0] - i, pos[1] - i)
+            if new_pos[0] == -1 or new_pos[1] == -1:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
 
         for i in range(1, 8):
-            new_pos = (self.pos[0] - i, self.pos[1] + i)
-            if 8 in new_pos or -1 in new_pos:
+            new_pos = (pos[0] - i, pos[1] + i)
+            if new_pos[0] == -1 or new_pos[1] == 8:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
 
         return [pos_can_moves, pos_can_takes]
+
+    def way_to_opp_king(self, opp_king_pos: tuple) -> list:
+        return Bishop.to_opp_king(self.pos, opp_king_pos)
+    
+    def possible_moves(self, matrix: ndarray) -> list:
+        return Bishop.get_possible_move(self.pos, matrix)
 
 class Knight(ChessPiece):
     around =(
@@ -478,6 +364,10 @@ class Knight(ChessPiece):
         if self.is_white:
             return 'wN' + pos_to_index(self.pos)
         return 'bN' + pos_to_index(self.pos)
+    
+    @staticmethod
+    def to_opp_king(pos, opp_king_pos):
+        return [pos]
 
     @staticmethod
     def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
@@ -487,27 +377,30 @@ class Knight(ChessPiece):
                 return True
 
         return False
-
-    def way_to_opp_king(self, opp_king_pos: tuple) -> list:
-        return [self.pos]
-
     
-    def possible_moves(self, matrix: ndarray) -> list:
+    @staticmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
         pos_can_moves = []
         pos_can_takes = []
         
         for index in Knight.around:
-            new_pos = (self.pos[0] + index[0], self.pos[1] + index[1])
+            new_pos = (pos[0] + index[0], pos[1] + index[1])
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] > 7 or new_pos[1] > 7:
                 continue
 
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
 
         return [pos_can_moves, pos_can_takes]          
+
+    def way_to_opp_king(self, opp_king_pos: tuple) -> list:
+        return [self.pos]
+    
+    def possible_moves(self, matrix: ndarray) -> list:
+        return Knight.get_possible_move(self.pos, matrix)
 
 class Rook(ChessPiece):
     def __init__(self, pos: tuple, is_white: bool) -> None:
@@ -519,6 +412,40 @@ class Rook(ChessPiece):
         if self.is_white:
             return 'wR' + pos_to_index(self.pos)
         return 'bR' + pos_to_index(self.pos)
+    
+    @staticmethod
+    def to_opp_king(pos, opp_king_pos):
+        result = [pos]
+
+        if opp_king_pos[0] > pos[0]:
+            for i in range(1, 8):
+                position = (pos[0] + i, pos[1])
+                if position == opp_king_pos:
+                    return result
+                result.append(position)
+        
+        elif opp_king_pos[0] < pos[0]:
+            for i in range(1, 8):
+                position = (pos[0] - i, pos[1])
+                if position == opp_king_pos:
+                    return result
+                result.append(position)
+
+        elif opp_king_pos[1] > pos[1]:
+            for i in range(1, 8):
+                position = (pos[0], pos[1] + i)
+                if position == opp_king_pos:
+                    return result
+                result.append(position)
+
+        elif opp_king_pos[1] < pos[1]:
+            for i in range(1, 8):
+                position = (pos[0], pos[1] - i)
+                if position == opp_king_pos:
+                    return result
+                result.append(position)
+
+        return result
 
     @staticmethod
     def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
@@ -526,118 +453,92 @@ class Rook(ChessPiece):
             new_pos = (pos[0] + i, pos[1])
             if new_pos == goal:
                 return True
-            if 8 in new_pos or matrix[new_pos] != 0:
+            if new_pos[0] == 8 or matrix[new_pos] != 0:
                 break
         
         for i in range(1, 8):
             new_pos = (pos[0] - i, pos[1])
             if new_pos == goal:
                 return True
-            if -1 in new_pos or matrix[new_pos] != 0:
+            if new_pos[0] == -1 or matrix[new_pos] != 0:
                 break
         
         for i in range(1, 8):
             new_pos = (pos[0], pos[1] + 1)
             if new_pos == goal:
                 return True
-            if 8 in new_pos or matrix[new_pos] != 0:
+            if new_pos[1] == 8 or matrix[new_pos] != 0:
                 break
         
         for i in range(1, 8):
             new_pos = (pos[0], pos[1] - 1)
             if new_pos == goal:
                 return True
-            if -1 in new_pos or matrix[new_pos] != 0:
+            if new_pos[1] == -1 or matrix[new_pos] != 0:
                 break
         
         return False
-
-    def way_to_opp_king(self, opp_king_pos: tuple) -> list:
-        result = [self.pos]
-
-        if opp_king_pos[0] > self.pos[0]:
-            for i in range(1, 8):
-                position = (self.pos[0] + i, self.pos[1])
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-        
-        elif opp_king_pos[0] < self.pos[0]:
-            for i in range(1, 8):
-                position = (self.pos[0] - i, self.pos[1])
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-
-        elif opp_king_pos[1] > self.pos[1]:
-            for i in range(1, 8):
-                position = (self.pos[0], self.pos[1] + i)
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-
-        elif opp_king_pos[1] < self.pos[1]:
-            for i in range(1, 8):
-                position = (self.pos[0], self.pos[1] - i)
-                if position == opp_king_pos:
-                    return result
-                result.append(position)
-
-        return result
     
-    def possible_moves(self, matrix: ndarray) -> list:
+    @staticmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
         pos_can_moves = []
         pos_can_takes = []
 
         for i in range(1, 8):
-            new_pos = (self.pos[0] + i, self.pos[1])
-            if 8 in new_pos:
+            new_pos = (pos[0] + i, pos[1])
+            if new_pos[0] == 8:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
                     
         for i in range(1, 8):
-            new_pos = (self.pos[0] - i, self.pos[1])
-            if -1 in new_pos:
+            new_pos = (pos[0] - i, pos[1])
+            if new_pos[0] == -1:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
                     
         for i in range(1, 8):
-            new_pos = (self.pos[0], self.pos[1] + i)
-            if 8 in new_pos:
+            new_pos = (pos[0], pos[1] + i)
+            if new_pos[1] == 8:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
                     
         for i in range(1, 8):
-            new_pos = (self.pos[0], self.pos[1] - i)
-            if -1 in new_pos:
+            new_pos = (pos[0], pos[1] - i)
+            if new_pos[1] == -1:
                 break
-            if can_move(self.pos, new_pos, matrix):
+            if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
                     pos_can_moves.append(new_pos)
                     continue
-                elif matrix[new_pos] * matrix[self.pos] < 0:
+                elif matrix[new_pos] * matrix[pos] < 0:
                     pos_can_takes.append(new_pos)
                 break
 
         return [pos_can_moves, pos_can_takes]
+
+    def way_to_opp_king(self, opp_king_pos: tuple) -> list:
+        return Rook.to_opp_king(self.pos, opp_king_pos)
+    
+    def possible_moves(self, matrix: ndarray) -> list:
+        return Rook.get_possible_move(self.pos, matrix)
 
 class Pawn(ChessPiece):
     def __init__(self, pos: tuple, is_white: bool) -> None:
@@ -649,6 +550,10 @@ class Pawn(ChessPiece):
         if self.is_white:
             return 'wP' + pos_to_index(self.pos)
         return 'bP' + pos_to_index(self.pos)
+    
+    @staticmethod
+    def to_opp_king(pos, opp_king_pos):
+        return [pos]
 
     @staticmethod
     def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
@@ -665,50 +570,54 @@ class Pawn(ChessPiece):
                 return True
             
         return False
+    
+    @staticmethod
+    def get_possible_move(pos: tuple, matrix: ndarray):
+        pos_can_moves = []
+        pos_can_takes = []
+
+        if matrix[pos] > 0:
+            new_pos = (pos[0], pos[1] + 1)
+            if matrix[new_pos] == 0: 
+                if can_move(pos, new_pos, matrix):
+                    pos_can_moves.append(new_pos)
+            
+                if pos[1] == 1:
+                    new_pos = (pos[0], pos[1] + 2)
+                    if matrix[new_pos] == 0 and can_move(pos, new_pos, matrix):
+                        pos_can_moves.append(new_pos)
+
+            new_pos = (pos[0] + 1, pos[1] + 1)
+            if 8 not in new_pos and matrix[new_pos] < 0 and can_move(pos, new_pos, matrix):
+                pos_can_takes.append(new_pos)
+
+            new_pos = (pos[0] - 1, pos[1] + 1)
+            if -1 not in new_pos and matrix[new_pos] < 0 and can_move(pos, new_pos, matrix):
+                pos_can_takes.append(new_pos)
+
+        else:
+            new_pos = (pos[0], pos[1] - 1)
+            if matrix[new_pos] == 0:
+                if can_move(pos, new_pos, matrix):
+                    pos_can_moves.append(new_pos)
+            
+                if pos[1] == 6:
+                    new_pos = (pos[0], pos[1] - 2)
+                    if matrix[new_pos]  == 0 and can_move(pos, new_pos, matrix):
+                        pos_can_moves.append(new_pos)
+
+            new_pos = (pos[0] + 1, pos[1] - 1)
+            if 8 not in new_pos and matrix[new_pos] > 0 and can_move(pos, new_pos, matrix):
+                pos_can_takes.append(new_pos)
+
+            new_pos = (pos[0] - 1, pos[1] - 1)
+            if -1 not in new_pos and matrix[new_pos] > 0 and can_move(pos, new_pos, matrix):
+                pos_can_takes.append(new_pos)
+
+        return [pos_can_moves, pos_can_takes]
 
     def way_to_opp_king(self, opp_king_pos: tuple) -> list:
         return [self.pos]
     
     def possible_moves(self, matrix: ndarray) -> list:
-        pos_can_moves = []
-        pos_can_takes = []
-
-        if self.is_white:
-            new_pos = (self.pos[0], self.pos[1] + 1)
-            if matrix[new_pos] == 0: 
-                if can_move(self.pos, new_pos, matrix):
-                    pos_can_moves.append(new_pos)
-            
-                if not self.is_moved:
-                    new_pos = (self.pos[0], self.pos[1] + 2)
-                    if matrix[new_pos] == 0 and can_move(self.pos, new_pos, matrix):
-                        pos_can_moves.append(new_pos)
-
-            new_pos = (self.pos[0] + 1, self.pos[1] + 1)
-            if 8 not in new_pos and matrix[new_pos] < 0 and can_move(self.pos, new_pos, matrix):
-                pos_can_takes.append(new_pos)
-
-            new_pos = (self.pos[0] - 1, self.pos[1] + 1)
-            if -1 not in new_pos and matrix[new_pos] < 0 and can_move(self.pos, new_pos, matrix):
-                pos_can_takes.append(new_pos)
-
-        else:
-            new_pos = (self.pos[0], self.pos[1] - 1)
-            if matrix[new_pos] == 0:
-                if can_move(self.pos, new_pos, matrix):
-                    pos_can_moves.append(new_pos)
-            
-                if not self.is_moved:
-                    new_pos = (self.pos[0], self.pos[1] - 2)
-                    if matrix[new_pos]  == 0 and can_move(self.pos, new_pos, matrix):
-                        pos_can_moves.append(new_pos)
-
-            new_pos = (self.pos[0] + 1, self.pos[1] - 1)
-            if 8 not in new_pos and matrix[new_pos] > 0 and can_move(self.pos, new_pos, matrix):
-                pos_can_takes.append(new_pos)
-
-            new_pos = (self.pos[0] - 1, self.pos[1] - 1)
-            if -1 not in new_pos and matrix[new_pos] > 0 and can_move(self.pos, new_pos, matrix):
-                pos_can_takes.append(new_pos)
-
-        return [pos_can_moves, pos_can_takes]
+        return Pawn.get_possible_move(self.pos, matrix)

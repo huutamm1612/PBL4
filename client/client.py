@@ -46,7 +46,7 @@ class MainScreen(View):
                     self.page = Chess(self.client_socket, self.surface)
 
                     self.client_socket.send('play'.encode())
-                    self.client_socket.send('searching_game'.encode())
+                    self.client_socket.send('play_computer'.encode())
 
                 elif button.id == 'home':
                     self.surface.fill(COLOR['background-color'])

@@ -4,6 +4,7 @@ import pickle
 import time
 import numpy as np
 from game import *
+from ai import AI
 
 class Server:
     def __init__(self, host='127.0.0.1', port=12345) -> None:
@@ -54,13 +55,24 @@ class Server:
                             self.client_in_game[self.player_searching_game[1]] = True
 
                             self.player_searching_game = self.player_searching_game[2:]
-                            
+                    
+                    elif msg == 'play_computer':
+                        self.games.append(
+                            Game([
+                                Player(client_address, True),
+                                Player('AI', False)
+                            ], play_com=True)
+                        )
+                        self.clients[client_address].send('play'.encode())
+                        self.clients[client_address].send('white'.encode())
+                        self.client_in_game[client_address] = True
+
                     else:
                         game = self.get_game_from_address(client_address)
-                        player_socket = [
-                            self.clients[game.players[0].client_address],
-                            self.clients[game.players[1].client_address]
-                        ]
+
+                        player_socket = [self.clients[game.players[0].client_address]]
+                        if not game.play_com:
+                            player_socket.append(self.clients[game.players[1].client_address])
 
                         action, pos = msg.split(' ')
                         pos = (int(pos[0]) - 1, int(pos[1]) - 1)
@@ -69,21 +81,24 @@ class Server:
                             client_socket.send('play'.encode())
                             client_socket.sendall(pickle.dumps([self.encode_pos(*can_move), self.encode_pos(*can_take)]))
 
-                        elif action == 'out':
+                        if action == 'out':
                             game.out(client_address)
 
-                        elif action == 'move':
-                            move_info = game.move(pos, client_address)
-                            for socket in player_socket:
-                                socket.send('play'.encode())
-                                socket.send(move_info.encode())
+                        if action == 'move' or action == 'take':
+                            if action == 'move':
+                                move_info = game.move(pos, client_address)
+                                for socket in player_socket:
+                                    socket.send('play'.encode())
+                                    socket.send(move_info.encode())
 
-                        elif action == 'take':
-                            move_info = game.take(pos, client_address)
-                            for socket in player_socket:
-                                socket.send('play'.encode())
-                                socket.send(move_info.encode())
+                            elif action == 'take':
+                                move_info = game.take(pos, client_address)
+                                for socket in player_socket:
+                                    socket.send('play'.encode())
+                                    socket.send(move_info.encode())
 
+                            if game.play_com:
+                                threading.Thread(target=self.ai_move, args=(game, player_socket[0]), daemon=True).start()
                 
             except ConnectionResetError:
                 print(f"[-] Connection lost from {client_address}")
@@ -91,6 +106,12 @@ class Server:
 
         client_socket.close()
         pass
+    
+    def ai_move(self, game, socket):
+        move_info = game.ai_move()
+        socket.send('play'.encode())
+        socket.send(move_info.encode())
+
 
     def encode_pos(self, *poses):
         li = []
