@@ -40,6 +40,7 @@ class Chess(View):
         self.can_move = None
         self.all_move_info = []
 
+
         self.buttons = [
             Button((800, 0, 100, 50), id='spin', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
         ]
@@ -275,9 +276,10 @@ class Chess(View):
         for button in self.buttons:
             if button.is_clicked(event, self.get_mouse_pos(pygame.mouse.get_pos())):
                 if button.id == 'spin':
-                    self.is_white_view = not self.is_white_view
+                    self.is_white_view = not self.is_white_view 
                     self.draw_broad()
 
     def repaint(self):
         for button in self.buttons:
             button.draw(self.surface)
+        
