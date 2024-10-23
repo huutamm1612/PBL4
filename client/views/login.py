@@ -13,8 +13,8 @@ class Login(View):
         self.input_box_username = pygame.Rect(self.x, self.y, 200, 40)
         self.input_box_password = pygame.Rect(self.x, self.y + 60, 200, 40)
         self.buttons = [
-            Button((self.x, self.y + 120, 200, 40), id='Login', text='Login', color=COLOR['green-button-color'], hover_color=COLOR[ 'green-button_hover-color'], border_radius=1, font_size = 20),
-            Button((self.x, self.y + 180, 200, 40), id='Signup', text='Signup', color=COLOR['gray-button-color'], hover_color=COLOR[ 'gray-button_hover-color'], border_radius=1, font_size=20),
+            Button((self.x, self.y + 120, 200, 40), id='login', text='Login', color=COLOR['green-button-color'], hover_color=COLOR[ 'green-button_hover-color'], border_radius=1, font_size = 20),
+            Button((self.x, self.y + 180, 200, 40), id='signup', text='Signup', color=COLOR['gray-button-color'], hover_color=COLOR[ 'gray-button_hover-color'], border_radius=1, font_size=20),
         ]
         self.color_inactive = pygame.Color('white')
         self.color_active = pygame.Color('white')
@@ -64,6 +64,15 @@ class Login(View):
 
     def listener(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
+
+            mouse_pos = (event.pos[0] - HEADER_WIDTH, event.pos[1])
+            for button in self.buttons:
+                if button.is_clicked(event, mouse_pos):
+                    if button.id == 'login':
+                        pass
+                    elif button.id == 'signup':
+                        return 'signup'
+                    
             pos = (event.pos[0] - HEADER_WIDTH, event.pos[1])
             # Kiểm tra nhấp chuột vào hộp nhập liệu "Tên đăng nhập"
             if self.input_box_username.collidepoint(pos):
