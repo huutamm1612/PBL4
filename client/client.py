@@ -26,6 +26,8 @@ class MainScreen(View):
         self.buttons = [
             Button((0, 0, self.header_width, 50), id='home', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 50, self.header_width, 50), id='play', text='Play', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+            Button((0, 100, self.header_width, 50), id='login', text='login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+            Button((0, 150, self.header_width, 50), id='signup', text='signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
         ]
 
     def repaint_header(self):
@@ -49,7 +51,13 @@ class MainScreen(View):
 
                 elif button.id == 'home':
                     self.surface.fill(COLOR['background-color'])
-                    self.page = self
+                    self.page = HomePage(self.client_socket, self.surface)
+                elif button.id == 'login':
+                    self.surface.fill(COLOR['background-color'])
+                    self.page = Login(self.client_socket, self.surface)
+                elif button.id == 'signup':
+                    self.surface.fill(COLOR['background-color'])
+                    self.page = Signup(self.client_socket, self.surface)
 
     def listener(self, event):
         pass
@@ -120,7 +128,6 @@ class Client:
                             self.index.page.change_broad(message)
                             self.index.page.draw_broad()
                             self.index.page.can_move = not self.index.page.can_move
-
             except Exception as e:
                 print(f"Error receiving message: {e}")
                 break

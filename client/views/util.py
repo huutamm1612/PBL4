@@ -13,6 +13,10 @@ COLOR = {
     'header-button-color' : (26, 24, 24),
     'black' : (0, 0, 0),
     'green1' : (),
+    'green-button-color' : (129, 182, 76),
+    'green-button_hover-color' : (163, 209, 96),
+    'gray-button-color' : (142, 154, 131),
+    'gray-button_hover-color' : (132, 141, 119),
     'background-color' : (49, 46, 43)
 }
 
