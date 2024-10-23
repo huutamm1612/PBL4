@@ -23,15 +23,17 @@ class MainScreen(View):
         self.header_layout.fill(COLOR['header-color'])
         self.page = HomePage(client_socket, self.surface)
 
-        self.buttons = [
+        self.header_buttons = [
             Button((0, 0, self.header_width, 50), id='home', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 50, self.header_width, 50), id='play', text='Play', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 100, self.header_width, 50), id='login', text='login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 150, self.header_width, 50), id='signup', text='signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
         ]
 
+        
+
     def repaint_header(self):
-        for button in self.buttons:
+        for button in self.header_buttons:
             button.draw(self.header_layout)
 
         self.screen.blit(self.header_layout, (0, 0))
@@ -40,7 +42,7 @@ class MainScreen(View):
         pass
 
     def listener_button(self, event):
-        for button in self.buttons:
+        for button in self.header_buttons:
             if button.is_clicked(event, mouse_pos=pygame.mouse.get_pos()):
                 if button.id == 'play':
                     self.surface.fill(COLOR['background-color'])
@@ -58,10 +60,28 @@ class MainScreen(View):
                 elif button.id == 'signup':
                     self.surface.fill(COLOR['background-color'])
                     self.page = Signup(self.client_socket, self.surface)
-                
 
     def listener(self, event):
         pass
+
+    def change_page(self, page):
+        if page == 'home':
+            self.surface.fill(COLOR['background-color'])
+            self.page = HomePage(self.client_socket, self.surface)
+        elif page == 'login':
+            self.surface.fill(COLOR['background-color'])
+            self.page = Login(self.client_socket, self.surface)
+        elif page == 'signup':
+            self.surface.fill(COLOR['background-color'])
+            self.page = Signup(self.client_socket, self.surface)
+        elif 'play' in page:
+            self.surface.fill(COLOR['background-color'])
+            self.page = Chess(self.client_socket, self.surface)
+
+            if len(page) > 4:
+                self.client_socket.send('play'.encode())
+                self.client_socket.send(page.encode())
+
 
     def run(self):
         running = True
@@ -71,7 +91,9 @@ class MainScreen(View):
                     running = False
                 
                 self.listener_button(event)
-                self.page.listener(event)
+                page = self.page.listener(event)
+                if page is not None:
+                    self.change_page(page)
     
             self.page.repaint()
             self.repaint_header()
@@ -129,6 +151,7 @@ class Client:
                             self.index.page.change_broad(message)
                             self.index.page.draw_broad()
                             self.index.page.can_move = not self.index.page.can_move
+
             except Exception as e:
                 print(f"Error receiving message: {e}")
                 break
