@@ -44,8 +44,8 @@ class Chess(View):
         'sbP' : resize(pygame.image.load('client/images/chess_pieces/bp.png'), (20, 20)),
     }
 
-    def __init__(self, client_socket, surface: pygame.Surface = None) -> None:
-        super().__init__(client_socket, surface)
+    def __init__(self, user: User, surface: pygame.Surface = None) -> None:
+        super().__init__(user, surface)
         self.chess_size = CHESS_SIZE
         self.broad_widht, self.broad_height = self.chess_size * 8, self.chess_size * 8
         self.broad_x, self.broad_y = 80, 80
@@ -287,8 +287,8 @@ class Chess(View):
             self.possible_moves = []
             self.possible_takes = []
 
-        self.client_socket.send('play'.encode())
-        self.client_socket.send(message.encode())
+        self.user.client_socket.send('play'.encode())
+        self.user.client_socket.send(message.encode())
 
         self.draw_broad()
 

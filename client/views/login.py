@@ -2,8 +2,8 @@ import pygame
 from .util import *
 import socket
 class Login(View):
-    def __init__(self, client_socket, surface: pygame.Surface = None):
-        super().__init__(client_socket, surface)
+    def __init__(self, user: User, surface: pygame.Surface = None):
+        super().__init__(user, surface)
         
 
         self.x = 500
@@ -70,8 +70,8 @@ class Login(View):
             for button in self.buttons:
                 if button.is_clicked(event, mouse_pos):
                     if button.id == 'login':
-                        self.client_socket.send('login'.encode())
-                        self.client_socket.send(f"{self.username},{self.password}".encode())
+                        self.user.client_socket.send('login'.encode())
+                        self.user.client_socket.send(f"{self.username},{self.password}".encode())
                     elif button.id == 'signup':
                         return 'signup'
 

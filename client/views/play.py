@@ -7,8 +7,8 @@ class Play(View):
         'wAvt' : resize(pygame.image.load('client/images/chess_pieces/wp.png'), (34, 34)),
         'bAvt' : resize(pygame.image.load('client/images/chess_pieces/bp.png'), (34, 34))
     }
-    def __init__(self, client_socket, surface = None):
-        super().__init__(client_socket, surface)
+    def __init__(self, user: User, surface = None):
+        super().__init__(user, surface)
         self.buttons = [
             Button((800, 200, 320, 70), id='play_online', text='Play Online', color=COLOR['green-button-color'], border_radius=4),
             Button((800, 300, 320, 70), id='play_computer', text='Play Computer', color=COLOR['green-button-color'], border_radius=4),

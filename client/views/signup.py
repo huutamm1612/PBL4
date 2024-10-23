@@ -2,8 +2,8 @@ import pygame
 from .util import *
 
 class Signup(View):
-    def __init__(self, client_socket, surface: pygame.Surface = None):
-        super().__init__(client_socket, surface)
+    def __init__(self, user:User, surface: pygame.Surface = None):
+        super().__init__(user, surface)
         
         self.x = 500
         self.y = 300

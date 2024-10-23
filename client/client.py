@@ -6,8 +6,8 @@ from views import *
 
 class MainScreen(View):
     surface = None
-    def __init__(self, client_socket, surface: pygame.Surface = None) -> None:
-        super().__init__(client_socket, surface)
+    def __init__(self, user: User, surface: pygame.Surface = None) -> None:
+        super().__init__(user, surface)
         
         pygame.init()
         self.width, self.height = WIDTH, HEIGHT
@@ -21,7 +21,7 @@ class MainScreen(View):
         self.surface = self.layout.subsurface(pygame.Rect(self.header_width, 0, self.width - self.header_width, self.height))
         self.surface.fill(COLOR['background-color'])
         self.header_layout.fill(COLOR['header-color'])
-        self.page = HomePage(client_socket, self.surface)
+        self.page = HomePage(user, self.surface)
 
         self.header_buttons = [
             Button((0, 0, self.header_width, 50), id='home', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
@@ -52,22 +52,22 @@ class MainScreen(View):
     def change_page(self, page):
         if page == 'home':
             self.surface.fill(COLOR['background-color'])
-            self.page = HomePage(self.client_socket, self.surface)
+            self.page = HomePage(self.user, self.surface)
         elif page == 'login':
             self.surface.fill(COLOR['background-color'])
-            self.page = Login(self.client_socket, self.surface)
+            self.page = Login(self.user, self.surface)
         elif page == 'signup':
             self.surface.fill(COLOR['background-color'])
-            self.page = Signup(self.client_socket, self.surface)
+            self.page = Signup(self.user, self.surface)
         elif 'play' in page:
             self.surface.fill(COLOR['background-color'])
             if page == 'play':
-                self.page = Play(self.client_socket, self.surface)
+                self.page = Play(self.user, self.surface)
 
             if len(page) > 4:
-                self.page = Chess(self.client_socket, self.surface)
-                self.client_socket.send('play'.encode())
-                self.client_socket.send(page.encode())
+                self.page = Chess(self.user, self.surface)
+                self.user.client_socket.send('play'.encode())
+                self.user.client_socket.send(page.encode())
 
 
     def run(self):
@@ -91,9 +91,9 @@ class MainScreen(View):
 
 class Client:
     def __init__(self, host='127.0.0.1', port=12345) -> None:
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.user = User(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         try:
-            self.client_socket.connect((host, port))
+            self.user.client_socket.connect((host, port))
             print('Connect successfully!')
         except Exception as e:
             print(f"Error connecting to server: {e}")
@@ -106,9 +106,9 @@ class Client:
     def receive_messages(self):
         while True:
             try:
-                header = self.client_socket.recv(1024).decode('utf-8')
+                header = self.user.client_socket.recv(1024).decode('utf-8')
                 print(header)
-                message = self.client_socket.recv(1024)
+                message = self.user.client_socket.recv(1024)
                 try:
                     message = message.decode('utf-8')
                 except:
@@ -154,7 +154,7 @@ class Client:
                 break
         
     def run(self):
-        self.index = MainScreen(self.client_socket)
+        self.index = MainScreen(self.user)
         self.index.run()
 
 if __name__ == '__main__':

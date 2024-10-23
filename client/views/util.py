@@ -1,6 +1,6 @@
 import pygame
 from abc import ABC, abstractmethod
-
+from .user import User
 COLOR = {
     'white' : (255, 255, 255),
     'broad-white' : (232, 234, 205),
@@ -30,8 +30,8 @@ CHESS_SIZE = 80
 PIECE_SCALE = 5
 
 class View(ABC):
-    def __init__(self, client_socket, surface: pygame.Surface=None) -> None:
-        self.client_socket = client_socket
+    def __init__(self, user: User, surface: pygame.Surface=None) -> None:
+        self.user = user
         self.surface = surface
         super().__init__()
 
