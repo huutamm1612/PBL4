@@ -107,6 +107,7 @@ class Client:
         while True:
             try:
                 header = self.client_socket.recv(1024).decode('utf-8')
+                print(header)
                 message = self.client_socket.recv(1024)
                 try:
                     message = message.decode('utf-8')
@@ -141,6 +142,12 @@ class Client:
                             self.index.page.change_broad(message)
                             self.index.page.draw_broad()
                             self.index.page.can_move = not self.index.page.can_move
+                elif header == 'login':
+                    if message == 'ok':
+                        self.index.change_page('home')
+                    elif message == 'no':
+                        print('sai')
+                        
 
             except Exception as e:
                 print(f"Error receiving message: {e}")

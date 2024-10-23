@@ -5,9 +5,11 @@ import time
 import numpy as np
 from game import *
 from ai import AI
+from database import Database
 
 class Server:
     def __init__(self, host='127.0.0.1', port=12345) -> None:
+        self.database = Database()
         self.host = host
         self.port = port
         self.client_logined = {}
@@ -104,7 +106,15 @@ class Server:
 
                             if game.play_com:
                                 threading.Thread(target=self.ai_move, args=(game, player_socket[0]), daemon=True).start()
-                
+                elif header == 'login':
+                    username, password = msg.split(',')                    
+                    if self.database.check_login(username, password):
+                        client_socket.send(header.encode())
+                        client_socket.send("ok".encode())
+                    else:                       
+                        client_socket.send(header.encode())
+                        client_socket.send("no".encode())
+        
             except ConnectionResetError:
                 print(f"[-] Connection lost from {client_address}")
                 break

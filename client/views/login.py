@@ -1,6 +1,6 @@
 import pygame
 from .util import *
-
+import socket
 class Login(View):
     def __init__(self, client_socket, surface: pygame.Surface = None):
         super().__init__(client_socket, surface)
@@ -62,6 +62,7 @@ class Login(View):
         # Cập nhật giao diện
         pygame.display.flip()
 
+
     def listener(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -69,9 +70,11 @@ class Login(View):
             for button in self.buttons:
                 if button.is_clicked(event, mouse_pos):
                     if button.id == 'login':
-                        pass
+                        self.client_socket.send('login'.encode())
+                        self.client_socket.send(f"{self.username},{self.password}".encode())
                     elif button.id == 'signup':
                         return 'signup'
+
                     
             pos = (event.pos[0] - HEADER_WIDTH, event.pos[1])
             # Kiểm tra nhấp chuột vào hộp nhập liệu "Tên đăng nhập"
@@ -103,4 +106,3 @@ class Login(View):
                     self.password = self.password[:-1]
                 else:
                     self.password += event.unicode
-    

@@ -14,7 +14,7 @@ class Signup(View):
         self.input_box_password = pygame.Rect(self.x, self.y + 60, 200, 40)
         self.input_box_confirm_password = pygame.Rect(self.x, self.y + 120, 200, 40)
         self.buttons = [
-            Button((self.x, self.y + 180, 200, 40), id='Signup', text='Signup', color=COLOR['green-button-color'], hover_color=COLOR['green-button_hover-color'], border_radius=1, font_size=20),
+            Button((self.x, self.y + 180, 200, 40), id='signup', text='Signup', color=COLOR['green-button-color'], hover_color=COLOR['green-button_hover-color'], border_radius=1, font_size=20),
         ]
         self.color_inactive = pygame.Color('white')
         self.color_active = pygame.Color('white')
@@ -34,7 +34,7 @@ class Signup(View):
         pygame.draw.rect(self.surface, COLOR['header-color'], self.background_rect, border_radius=10)
         
         # Title
-        title_surface = self.header_font.render("Login to your account", True, (255, 255, 255))
+        title_surface = self.header_font.render("Signup to your account", True, (255, 255, 255))
         self.surface.blit(title_surface, (self.x - 10, self.y - 60))
         
         # Username
@@ -71,6 +71,15 @@ class Signup(View):
 
     def listener(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = (event.pos[0] - HEADER_WIDTH, event.pos[1])
+            for button in self.buttons:
+                if button.is_clicked(event, mouse_pos):
+                    if button.id == 'signup':
+                        return 'login'
+
+
+
+
             pos = (event.pos[0] - HEADER_WIDTH, event.pos[1])
             # Check if the user clicked on the username input box
             if self.input_box_username.collidepoint(pos):
