@@ -72,7 +72,6 @@ def can_move(start, goal, matrix: ndarray):
             king_pos = (coor[0][0], coor[1][0])
 
     opp_chesses = get_opp_chesses(is_white, matrix)
-    
     tmp1 = matrix[goal]
     tmp2 = matrix[start]
 
@@ -92,7 +91,6 @@ class ChessPiece(ABC):
     def __init__(self, pos: tuple, is_white: bool) -> None:
         # vị trí của quân cờ 'self'
         self.pos = pos
-
         # quân cờ 'self' có phải quân trắng hay không
         self.is_white = is_white
 
@@ -123,8 +121,6 @@ class ChessPiece(ABC):
     def possible_moves(self, matrix: ndarray) -> list:
         # Trả về tất cả các vị trí mà quân cờ 'self' có thể đi đến (kể cả ăn quân đối thủ)
         pass
-
-
 
 class King(ChessPiece):
     around = (
@@ -189,7 +185,7 @@ class Queen(ChessPiece):
     
     @staticmethod
     def to_opp_king(pos, opp_king_pos):
-        r = Rook.to_opp_king(pos, opp_king_pos)
+        r = Rook.to_opp_king(pos, opp_king_pos)[1:]
         r.extend(Bishop.to_opp_king(pos, opp_king_pos))
         return r
 
@@ -231,21 +227,21 @@ class Bishop(ChessPiece):
                     return result
                 result.append(possition)
 
-        elif opp_king_pos[0] > pos[1] and opp_king_pos[1] < pos[1]:
+        elif opp_king_pos[0] > pos[0] and opp_king_pos[1] < pos[1]:
             for i in range(1, 8):
                 possition = (pos[0] + i, pos[1] - i)
                 if opp_king_pos == possition:
                     return result
                 result.append(possition)
 
-        elif opp_king_pos[0] < pos[1] and opp_king_pos[1] < pos[1]:
+        elif opp_king_pos[0] < pos[0] and opp_king_pos[1] < pos[1]:
             for i in range(1, 8):
                 possition = (pos[0] - i, pos[1] - i)
                 if opp_king_pos == possition:
                     return result
                 result.append(possition)
 
-        elif opp_king_pos[0] < pos[1] and opp_king_pos[1] > pos[1]:
+        elif opp_king_pos[0] < pos[0] and opp_king_pos[1] > pos[1]:
             for i in range(1, 8):
                 possition = (pos[0] - i, pos[1] + i)
                 if opp_king_pos == possition:
@@ -297,7 +293,7 @@ class Bishop(ChessPiece):
 
         for i in range(1, 8):
             new_pos = (pos[0] + i, pos[1] + i)
-            if new_pos[0] == 8 or new_pos[1] == 8:
+            if new_pos[0] == 8 or new_pos[1] == 8 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -309,7 +305,7 @@ class Bishop(ChessPiece):
 
         for i in range(1, 8):
             new_pos = (pos[0] + i, pos[1] - i)
-            if new_pos[0] == 8 or new_pos[1] == -1:
+            if new_pos[0] == 8 or new_pos[1] == -1 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -321,7 +317,7 @@ class Bishop(ChessPiece):
 
         for i in range(1, 8):
             new_pos = (pos[0] - i, pos[1] - i)
-            if new_pos[0] == -1 or new_pos[1] == -1:
+            if new_pos[0] == -1 or new_pos[1] == -1 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -333,7 +329,7 @@ class Bishop(ChessPiece):
 
         for i in range(1, 8):
             new_pos = (pos[0] - i, pos[1] + i)
-            if new_pos[0] == -1 or new_pos[1] == 8:
+            if new_pos[0] == -1 or new_pos[1] == 8 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -417,28 +413,28 @@ class Rook(ChessPiece):
     def to_opp_king(pos, opp_king_pos):
         result = [pos]
 
-        if opp_king_pos[0] > pos[0]:
+        if opp_king_pos[0] > pos[0] and opp_king_pos[1] == pos[1]:
             for i in range(1, 8):
                 position = (pos[0] + i, pos[1])
                 if position == opp_king_pos:
                     return result
                 result.append(position)
         
-        elif opp_king_pos[0] < pos[0]:
+        elif opp_king_pos[0] < pos[0] and opp_king_pos[1] == pos[1]:
             for i in range(1, 8):
                 position = (pos[0] - i, pos[1])
                 if position == opp_king_pos:
                     return result
                 result.append(position)
 
-        elif opp_king_pos[1] > pos[1]:
+        elif opp_king_pos[1] > pos[1] and opp_king_pos[0] == pos[0]:
             for i in range(1, 8):
                 position = (pos[0], pos[1] + i)
                 if position == opp_king_pos:
                     return result
                 result.append(position)
 
-        elif opp_king_pos[1] < pos[1]:
+        elif opp_king_pos[1] < pos[1] and opp_king_pos[0] == pos[0]:
             for i in range(1, 8):
                 position = (pos[0], pos[1] - i)
                 if position == opp_king_pos:
@@ -449,33 +445,37 @@ class Rook(ChessPiece):
 
     @staticmethod
     def is_attack_at(pos: tuple, goal: tuple, matrix: ndarray) -> bool:
-        for i in range(1, 8):
-            new_pos = (pos[0] + i, pos[1])
-            if new_pos == goal:
-                return True
-            if new_pos[0] == 8 or matrix[new_pos] != 0:
-                break
+        if goal[0] > pos[0] and goal[1] == pos[1]:
+            for i in range(1, 8):
+                new_pos = (pos[0] + i, pos[1])
+                if new_pos == goal:
+                    return True
+                if new_pos[0] == 8 or matrix[new_pos] != 0:
+                    break
         
-        for i in range(1, 8):
-            new_pos = (pos[0] - i, pos[1])
-            if new_pos == goal:
-                return True
-            if new_pos[0] == -1 or matrix[new_pos] != 0:
-                break
+        if goal[0] < pos[0] and goal[1] == pos[1]:
+            for i in range(1, 8):
+                new_pos = (pos[0] - i, pos[1])
+                if new_pos == goal:
+                    return True
+                if new_pos[0] == -1 or matrix[new_pos] != 0:
+                    break
         
-        for i in range(1, 8):
-            new_pos = (pos[0], pos[1] + 1)
-            if new_pos == goal:
-                return True
-            if new_pos[1] == 8 or matrix[new_pos] != 0:
-                break
+        if goal[1] > pos[1] and goal[0] == pos[0]:
+            for i in range(1, 8):
+                new_pos = (pos[0], pos[1] + i)
+                if new_pos == goal:
+                    return True
+                if new_pos[1] == 8 or matrix[new_pos] != 0:
+                    break
         
-        for i in range(1, 8):
-            new_pos = (pos[0], pos[1] - 1)
-            if new_pos == goal:
-                return True
-            if new_pos[1] == -1 or matrix[new_pos] != 0:
-                break
+        if goal[1] < pos[1] and goal[0] == pos[0]:
+            for i in range(1, 8):
+                new_pos = (pos[0], pos[1] - i)
+                if new_pos == goal:
+                    return True
+                if new_pos[1] == -1 or matrix[new_pos] != 0:
+                    break
         
         return False
     
@@ -486,7 +486,7 @@ class Rook(ChessPiece):
 
         for i in range(1, 8):
             new_pos = (pos[0] + i, pos[1])
-            if new_pos[0] == 8:
+            if new_pos[0] == 8 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -498,7 +498,7 @@ class Rook(ChessPiece):
                     
         for i in range(1, 8):
             new_pos = (pos[0] - i, pos[1])
-            if new_pos[0] == -1:
+            if new_pos[0] == -1 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -510,7 +510,7 @@ class Rook(ChessPiece):
                     
         for i in range(1, 8):
             new_pos = (pos[0], pos[1] + i)
-            if new_pos[1] == 8:
+            if new_pos[1] == 8 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:
@@ -522,7 +522,7 @@ class Rook(ChessPiece):
                     
         for i in range(1, 8):
             new_pos = (pos[0], pos[1] - i)
-            if new_pos[1] == -1:
+            if new_pos[1] == -1 or matrix[new_pos] * matrix[pos] > 0:
                 break
             if can_move(pos, new_pos, matrix):
                 if matrix[new_pos] == 0:

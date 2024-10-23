@@ -5,9 +5,10 @@ import threading
 from views import *
 
 class MainScreen(View):
+    surface = None
     def __init__(self, client_socket, surface: pygame.Surface = None) -> None:
         super().__init__(client_socket, surface)
-
+        
         pygame.init()
         self.width, self.height = WIDTH, HEIGHT
         self.screen = pygame.display.set_mode((self.width, self.height))
