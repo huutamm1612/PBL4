@@ -10,6 +10,7 @@ class Server:
     def __init__(self, host='127.0.0.1', port=12345) -> None:
         self.host = host
         self.port = port
+        self.client_logined = {}
         self.clients = {}
         self.client_in_game = {}
 
@@ -28,6 +29,10 @@ class Server:
                     return game
                 
         return None
+    
+    def get_name(self, client_address):
+        if client_address not in self.client_logined:
+            return 'Guest'
         
     def handle_client(self, client_socket, client_address):
         while True:
@@ -47,9 +52,9 @@ class Server:
                                 ])
                             )
                             self.clients[self.player_searching_game[0]].send('play'.encode())
-                            self.clients[self.player_searching_game[0]].send('white'.encode())
+                            self.clients[self.player_searching_game[0]].send(f'start white {self.get_name(self.player_searching_game[1])}'.encode())
                             self.clients[self.player_searching_game[1]].send('play'.encode())
-                            self.clients[self.player_searching_game[1]].send('black'.encode())
+                            self.clients[self.player_searching_game[1]].send(f'start black {self.get_name(self.player_searching_game[0])}'.encode())
 
                             self.client_in_game[self.player_searching_game[0]] = True
                             self.client_in_game[self.player_searching_game[1]] = True
@@ -64,7 +69,7 @@ class Server:
                             ], play_com=True)
                         )
                         self.clients[client_address].send('play'.encode())
-                        self.clients[client_address].send('white'.encode())
+                        self.clients[client_address].send('start white Computer'.encode())
                         self.client_in_game[client_address] = True
 
                     else:

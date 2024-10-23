@@ -17,7 +17,9 @@ COLOR = {
     'green-button_hover-color' : (163, 209, 96),
     'gray-button-color' : (142, 154, 131),
     'gray-button_hover-color' : (132, 141, 119),
-    'background-color' : (49, 46, 43)
+    'background-color' : (49, 46, 43),
+    'avt-black' : (71, 69, 66),
+    'avt-white' : (231, 229, 227),
 }
 
 WIDTH = 1500
@@ -25,6 +27,7 @@ HEIGHT = 800
 HEADER_WIDTH = 200
 HEADER_HEIGHT = 800 
 CHESS_SIZE = 80
+PIECE_SCALE = 5
 
 class View(ABC):
     def __init__(self, client_socket, surface: pygame.Surface=None) -> None:
@@ -58,7 +61,7 @@ class Button:
             id: str='',
             text: str='', 
             color: tuple=(0, 0, 0), 
-            hover_color: tuple=(0, 0, 0), 
+            hover_color: tuple=None, 
             text_color: tuple=(255, 255, 255), 
             font_size: int=30, 
             font_family: str='Helvetica',
@@ -77,6 +80,9 @@ class Button:
         self.font_family = font_family
         self.font = pygame.font.SysFont(self.font_family, font_size, bold=True)
         self.border_radius = border_radius
+
+        if self.hover_color is None:
+            self.hover_color = self.color 
     
     def draw(self, screen):
         mouse_pos = pygame.mouse.get_pos()

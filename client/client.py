@@ -30,7 +30,7 @@ class MainScreen(View):
             Button((0, 150, self.header_width, 50), id='signup', text='signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
         ]
 
-        
+
 
     def repaint_header(self):
         for button in self.header_buttons:
@@ -44,22 +44,7 @@ class MainScreen(View):
     def listener_button(self, event):
         for button in self.header_buttons:
             if button.is_clicked(event, mouse_pos=pygame.mouse.get_pos()):
-                if button.id == 'play':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = Chess(self.client_socket, self.surface)
-
-                    self.client_socket.send('play'.encode())
-                    self.client_socket.send('play_computer'.encode())
-
-                elif button.id == 'home':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = HomePage(self.client_socket, self.surface)
-                elif button.id == 'login':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = Login(self.client_socket, self.surface)
-                elif button.id == 'signup':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = Signup(self.client_socket, self.surface)
+                self.change_page(button.id)
 
     def listener(self, event):
         pass
@@ -76,9 +61,11 @@ class MainScreen(View):
             self.page = Signup(self.client_socket, self.surface)
         elif 'play' in page:
             self.surface.fill(COLOR['background-color'])
-            self.page = Chess(self.client_socket, self.surface)
+            if page == 'play':
+                self.page = Play(self.client_socket, self.surface)
 
             if len(page) > 4:
+                self.page = Chess(self.client_socket, self.surface)
                 self.client_socket.send('play'.encode())
                 self.client_socket.send(page.encode())
 
@@ -123,22 +110,25 @@ class Client:
                 message = self.client_socket.recv(1024)
                 try:
                     message = message.decode('utf-8')
-                    print(message)
                 except:
                     message = pickle.loads(message)
 
                 if header == 'play':
-                    if message == 'black':
-                        self.index.page.is_white = False
-                        self.index.page.is_white_view = False
-                        self.index.page.can_move = False
-                        self.index.page.draw_broad()
+                    if 'start' in message:
+                        info = message.split()
+                        if info[1] == 'black':
+                            self.index.page.is_white = False
+                            self.index.page.is_white_view = False
+                            self.index.page.can_move = False
+                            self.index.page.draw_broad()
 
-                    elif message == 'white':
-                        self.index.page.is_white = True
-                        self.index.page.is_white_view = True
-                        self.index.page.can_move = True
-                        self.index.page.draw_broad()
+                        elif info[1] == 'white':
+                            self.index.page.is_white = True
+                            self.index.page.is_white_view = True
+                            self.index.page.can_move = True
+                            self.index.page.draw_broad()
+
+                        print(info)
 
                     else:
                         if type(message) is list:
