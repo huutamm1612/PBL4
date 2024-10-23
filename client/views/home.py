@@ -11,6 +11,7 @@ class HomePage(View):
         ]
 
     def repaint(self):
+        self.surface.fill(COLOR['background-color'])
         for btn in self.buttons:
             btn.draw(self.surface)
         self.surface.blit(self.broad_img, (100, 125))

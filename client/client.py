@@ -44,22 +44,7 @@ class MainScreen(View):
     def listener_button(self, event):
         for button in self.header_buttons:
             if button.is_clicked(event, mouse_pos=pygame.mouse.get_pos()):
-                if button.id == 'play':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = Chess(self.client_socket, self.surface)
-
-                    self.client_socket.send('play'.encode())
-                    self.client_socket.send('play_computer'.encode())
-
-                elif button.id == 'home':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = HomePage(self.client_socket, self.surface)
-                elif button.id == 'login':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = Login(self.client_socket, self.surface)
-                elif button.id == 'signup':
-                    self.surface.fill(COLOR['background-color'])
-                    self.page = Signup(self.client_socket, self.surface)
+                self.change_page(button.id)
 
     def listener(self, event):
         pass
@@ -120,6 +105,7 @@ class Client:
         while True:
             try:
                 header = self.client_socket.recv(1024).decode('utf-8')
+                print(header)
                 message = self.client_socket.recv(1024)
                 try:
                     message = message.decode('utf-8')
@@ -151,6 +137,12 @@ class Client:
                             self.index.page.change_broad(message)
                             self.index.page.draw_broad()
                             self.index.page.can_move = not self.index.page.can_move
+                elif header == 'login':
+                    if message == 'ok':
+                        self.index.change_page('home')
+                    elif message == 'no':
+                        print('sai')
+                        
 
             except Exception as e:
                 print(f"Error receiving message: {e}")
