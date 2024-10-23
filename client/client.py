@@ -58,6 +58,7 @@ class MainScreen(View):
                 elif button.id == 'signup':
                     self.surface.fill(COLOR['background-color'])
                     self.page = Signup(self.client_socket, self.surface)
+                
 
     def listener(self, event):
         pass

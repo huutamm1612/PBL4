@@ -94,3 +94,4 @@ class Login(View):
                     self.password = self.password[:-1]
                 else:
                     self.password += event.unicode
+    
