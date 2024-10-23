@@ -246,11 +246,54 @@ class Game:
 
         if type(chess_piece) in [King, Pawn, Rook]:
             chess_piece.is_moved = True
+            if type(chess_piece) is Pawn and (chess_piece.pos[1] == 7 or chess_piece.pos[1] == 0):
+                self.promote(chess_piece)
+
+    def promote(self, pawn_piece):
+        self.chess_pieces.remove(pawn_piece)
+        self.chess_pieces.append(Queen(pawn_piece.pos, pawn_piece.is_white))
+        self.matrix[pawn_piece.pos] = 2 * (self.matrix[pawn_piece.pos] / abs(self.matrix[pawn_piece.pos]))
+
+    def get_is_moved(self):
+        is_moved = [
+            [False, False],
+            [False, False]
+        ]
+
+        for piece in self.chess_pieces:
+            if type(piece) is Rook:
+                if piece.is_moved:
+                    if piece.pos == (0, 0):
+                        is_moved[0][0] = True
+                    elif piece.pos == (7, 0):
+                        is_moved[0][1] = True
+                    if piece.pos == (0, 7):
+                        is_moved[1][0] = True
+                    elif piece.pos == (7, 7):
+                        is_moved[1][1] = True
+        
+        if False not in is_moved[0]:
+            is_moved[0] = None
+        if False not in is_moved[1]:
+            is_moved[1] = None
+        
+        for piece in self.chess_pieces:
+            if type(piece) is King:
+                if piece.is_moved:
+                    if piece.is_white:
+                        is_moved[0] = None
+                    else:
+                        is_moved[1] = None
+
+        return is_moved
 
     def ai_move(self):
-        print(self.break_check)
-        start, goal = AI.move(self.matrix, self.break_check)
-        
+        is_moved = self.get_is_moved()
+        try:
+            start, goal = AI.move(self.matrix, self.break_check, is_moved)
+        except:
+            print(self.matrix, self.break_check, is_moved)
+            
         chess_piece = self.get_chess_piece_from_pos(start)
         if self.get_chess_piece_from_pos(goal) is not None:
             self.all_move_info.append(str(chess_piece) + 'x' + pos_to_index(goal))
@@ -260,7 +303,6 @@ class Game:
             self.all_move_info.append(str(chess_piece) + pos_to_index(goal))
 
         self.move_chess(start, goal)
-
         if self.is_check(self.players[1]):
             self.is_white_checked = self.white_turn
             if self.is_checkmate(self.players[1]):
