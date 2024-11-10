@@ -123,9 +123,27 @@ class Server:
                     if self.database.check_login(username, password):
                         client_socket.send(header.encode())
                         client_socket.send("ok".encode())
-                    else:                       
+                    elif self.database.check_login(username, password) == False:                        
                         client_socket.send(header.encode())
                         client_socket.send("no".encode())
+                elif header == 'reset_password':
+                    username, password = msg.split(',')       
+                    if self.database.update_password(username, password):
+                        client_socket.send(header.encode())
+                        client_socket.send("updateok".encode())
+                        print("change ok")
+                    elif self.database.update_password(username, password) == False:
+                        client_socket.send(header.encode())
+                        client_socket.send("updateno".encode())
+                        print("change not ok ")
+                elif header == 'signup':
+                    username, password = msg.split(',')
+                    if self.database.signup(username, password):
+                        client_socket.send(header.encode())
+                        client_socket.send("DKok".encode())
+                    else:
+                        client_socket.send(header.encode())
+                        client_socket.send("DKno".encode())
         
             except ConnectionResetError:
                 print(f"[-] Connection lost from {client_address}")

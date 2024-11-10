@@ -6,6 +6,10 @@ from views import *
 
 class MainScreen(View):
     surface = None
+    
+    header_buttons = []
+
+
     def __init__(self, user: User, surface: pygame.Surface = None) -> None:
         super().__init__(user, surface)
         
@@ -22,18 +26,33 @@ class MainScreen(View):
         self.surface.fill(COLOR['background-color'])
         self.header_layout.fill(COLOR['header-color'])
         self.page = HomePage(user, self.surface)
+        self.active_button = None 
 
-        self.header_buttons = [
-            Button((0, 0, self.header_width, 50), id='home', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
-            Button((0, 50, self.header_width, 50), id='play', text='Play', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
-            Button((0, 100, self.header_width, 50), id='login', text='login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
-            Button((0, 150, self.header_width, 50), id='signup', text='signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+        MainScreen.header_buttons = [
+            Button((0, 0, HEADER_WIDTH, 50), id='home', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+            Button((0, 50, HEADER_WIDTH, 50), id='play', text='Play', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+            Button((0, 100, HEADER_WIDTH, 50), id='login', text='Login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+            Button((0, 150, HEADER_WIDTH, 50), id='signup', text='Signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+    
         ]
 
-
+    @staticmethod
+    def click_button_login():
+        MainScreen.header_buttons = MainScreen.header_buttons[:2]
+        MainScreen.header_buttons.append(
+            Button((0, 100, HEADER_WIDTH, 50), id='logout', text='Logout', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+        )
+    def click_button_logout(self):
+        self.user.logout()
+        MainScreen.header_buttons = MainScreen.header_buttons[:2]
+        MainScreen.header_buttons.extend([
+            Button((0, 100, HEADER_WIDTH, 50), id='login', text='Login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+            Button((0, 150, HEADER_WIDTH, 50), id='signup', text='Signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
+        ])
 
     def repaint_header(self):
-        for button in self.header_buttons:
+        self.header_layout.fill(COLOR['header-color'])
+        for button in MainScreen.header_buttons:
             button.draw(self.header_layout)
 
         self.screen.blit(self.header_layout, (0, 0))
@@ -42,9 +61,20 @@ class MainScreen(View):
         pass
 
     def listener_button(self, event):
-        for button in self.header_buttons:
-            if button.is_clicked(event, mouse_pos=pygame.mouse.get_pos()):
-                self.change_page(button.id)
+        mouse_pos = pygame.mouse.get_pos()
+        for button in MainScreen.header_buttons:
+            if button.is_clicked(event, mouse_pos):
+                if button.id == 'logout':
+                    self.click_button_logout()
+                else:
+                    self.active_button = button
+                    self.change_page(button.id)
+            if button == self.active_button:
+                button.color = COLOR['header-button-color'] 
+            else:
+                button.color = COLOR['header-color']
+        self.repaint_header()
+
 
     def listener(self, event):
         pass
@@ -68,7 +98,6 @@ class MainScreen(View):
                 self.page = Chess(self.user, self.surface)
                 self.user.client_socket.send('play'.encode())
                 self.user.client_socket.send(page.encode())
-
 
     def run(self):
         running = True
@@ -137,10 +166,22 @@ class Client:
                 elif header == 'login':
                     if message == 'ok':
                         self.index.change_page('home')
+                        MainScreen.click_button_login()
                     elif message == 'no':
-                        print('sai')
-                        
-
+                        self.index.page.error_message_login = "Incorrect username or password."
+                        self.index.page.repaint()
+                elif header == 'reset_password':
+                    if message == 'updateok':
+                        self.index.change_page('login')
+                        print("change ok")
+                    elif message == 'updateno':
+                        self.index.page.error_message_forgot = "Incorrect username"
+                        print("change not ok")
+                elif header == 'signup':
+                    if message == 'DKok':
+                        self.index.change_page('home')
+                    elif message == 'DKno':
+                        print('dang ki sai')
             except Exception as e:
                 print(f"Error receiving message: {e}")
                 break

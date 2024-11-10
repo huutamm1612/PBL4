@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from .user import User
 COLOR = {
     'white' : (255, 255, 255),
+    'white-focus': (166, 166, 166),
     'broad-white' : (232, 234, 205),
     'broad-green' : (117, 150, 84),
     'broad-highlight-white' : (245, 246, 130),
@@ -14,6 +15,7 @@ COLOR = {
     'black' : (0, 0, 0),
     'green1' : (),
     'green-button-color' : (129, 182, 76),
+    'href-button-color' : (100, 100, 100),
     'green-button_hover-color' : (163, 209, 96),
     'gray-button-color' : (142, 154, 131),
     'gray-button_hover-color' : (132, 141, 119),

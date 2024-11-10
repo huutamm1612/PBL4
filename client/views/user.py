@@ -7,6 +7,10 @@ class User:
 
     def login(self, username, password):
         self.username = username
-        self.password = password
+        self.password = password 
+    
+    def logout(self):
+        self.username = 'guest'
+        self.password = None
     
     
