@@ -55,39 +55,39 @@ class Login(View):
         self.login_status = False
         
     def repaint(self):
+        if self.is_login:
+            pygame.draw.rect(self.surface, COLOR['header-color'], self.background_login_rect, border_radius = 10)
         
-        pygame.draw.rect(self.surface, COLOR['header-color'], self.background_rect, border_radius = 10)
-     
-        title_surface = self.header_font.render("Login to your account", True, (255, 255, 255))
-        self.surface.blit(title_surface, (self.x - 10, self.y - 60))
-        
-        username_surface = self.small_font.render("Username:",True, (255,255,255))
-        self.surface.blit(username_surface, (self.x, self.y - 15))
+            title_surface = self.header_font.render("Login to your account", True, (255, 255, 255))
+            self.surface.blit(title_surface, (self.x - 10, self.y - 60))
+            
+            username_surface = self.small_font.render("Username:",True, (255,255,255))
+            self.surface.blit(username_surface, (self.x, self.y - 15))
 
-        pygame.draw.rect(self.surface,  self.color_username, self.input_box_username)
-        user_text_surface = self.font.render(self.username, True, COLOR['black'])
-        self.surface.blit(user_text_surface, (self.input_box_username.x + 5, self.input_box_username.y + 10))
+            pygame.draw.rect(self.surface,  self.color_username, self.input_box_username)
+            user_text_surface = self.font.render(self.username, True, COLOR['black'])
+            self.surface.blit(user_text_surface, (self.input_box_username.x + 5, self.input_box_username.y + 10))
 
-        password_surface = self.small_font.render("Password:", True, (255, 255, 255))
-        self.surface.blit(password_surface, (self.x, self.y + 45))
+            password_surface = self.small_font.render("Password:", True, (255, 255, 255))
+            self.surface.blit(password_surface, (self.x, self.y + 45))
 
-        pygame.draw.rect(self.surface,  self.color_password, self.input_box_password)
-        password_text_surface = self.font.render('*' * len(self.password), True, COLOR['black'])
-        self.surface.blit(password_text_surface, (self.input_box_password.x + 5, self.input_box_password.y + 10))
-        
+            pygame.draw.rect(self.surface,  self.color_password, self.input_box_password)
+            password_text_surface = self.font.render('*' * len(self.password), True, COLOR['black'])
+            self.surface.blit(password_text_surface, (self.input_box_password.x + 5, self.input_box_password.y + 10))
+            
 
 
-        for btn in self.buttons:
-            if btn.id == "login":
-                btn.draw(self.surface)
-            elif btn.id == "signup":
-                btn.draw(self.surface)
-            elif btn.id == "forgot_password":
-                btn.draw(self.surface)
-        
-        if self.error_message_login:
-            error_surface = self.small_font.render(self.error_message_login, True, (255, 0, 0))
-            self.surface.blit(error_surface, (self.x, self.y + 162))
+            for btn in self.buttons:
+                if btn.id == "login":
+                    btn.draw(self.surface)
+                elif btn.id == "signup":
+                    btn.draw(self.surface)
+                elif btn.id == "forgot_password":
+                    btn.draw(self.surface)
+            
+            if self.error_message_login:
+                error_surface = self.small_font.render(self.error_message_login, True, (255, 0, 0))
+                self.surface.blit(error_surface, (self.x, self.y + 162))
         
         else:
             pygame.draw.rect(self.surface, COLOR['header-color'], self.background_forgotPassword_rect, border_radius=10)
