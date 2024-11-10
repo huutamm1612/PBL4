@@ -1,5 +1,6 @@
 import pygame
 from .util import *
+from .login import Login
 
 class Play(View):
     images = {
@@ -14,7 +15,7 @@ class Play(View):
             Button((800, 300, 320, 70), id='play_computer', text='Play Computer', color=COLOR['green-button-color'], border_radius=4),
             Button((800, 400, 320, 70), id='play_friend', text='Play With Friend', color=COLOR['green-button-color'], border_radius=4),
         ]
-
+        self.login_view = Login(user, surface)
         self.font = pygame.font.Font(None, 20)
     
     def repaint(self):
@@ -34,8 +35,9 @@ class Play(View):
         self.surface.blit(self.font.render('Player', False, COLOR['white']), (130, 725))
 
     def listener(self, event):
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = (event.pos[0] - HEADER_WIDTH, event.pos[1])
             for button in self.buttons:
                 if button.is_clicked(event, mouse_pos):
-                    return button.id
+                        return button.id
