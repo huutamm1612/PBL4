@@ -107,7 +107,6 @@ class Client:
         while True:
             try:
                 header = self.user.client_socket.recv(1024).decode('utf-8')
-                print(header)
                 message = self.user.client_socket.recv(1024)
                 try:
                     message = message.decode('utf-8')
@@ -117,20 +116,12 @@ class Client:
                 if header == 'play':
                     if 'start' in message:
                         info = message.split()
-                        if info[1] == 'black':
-                            self.index.page.is_white = False
-                            self.index.page.is_white_view = False
-                            self.index.page.can_move = False
-                            self.index.page.draw_broad()
+                        self.index.page.set_color(info[1])
+                        self.index.page.set_opp(info[2:])
 
-                        elif info[1] == 'white':
-                            self.index.page.is_white = True
-                            self.index.page.is_white_view = True
-                            self.index.page.can_move = True
-                            self.index.page.draw_broad()
-
-                        print(info)
-
+                    elif message[:4] == 'chat':
+                        self.index.page.chat += '\n' + message[4:]
+                    
                     else:
                         if type(message) is list:
                             self.index.page.possible_moves = message[0]
@@ -138,10 +129,11 @@ class Client:
                             self.index.page.draw_broad()
                         
                         else: 
-                            self.index.page.all_move_info.append(message)
+                            self.index.page.add_move_info(message)
                             self.index.page.change_broad(message)
                             self.index.page.draw_broad()
                             self.index.page.can_move = not self.index.page.can_move
+
                 elif header == 'login':
                     if message == 'ok':
                         self.index.change_page('home')

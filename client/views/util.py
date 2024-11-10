@@ -20,6 +20,10 @@ COLOR = {
     'background-color' : (49, 46, 43),
     'avt-black' : (71, 69, 66),
     'avt-white' : (231, 229, 227),
+    'chat-color' : (33, 32, 30),
+    'chat-color1' : (30, 30, 30),
+    'right-layout-color' : (38, 37, 34),
+    'move-inf' : (52,51,58),
 }
 
 WIDTH = 1500
@@ -53,6 +57,14 @@ def is_clicked(mouse_pos, surface_rect: pygame.Rect):
 # ví dụ 'e1' -> '51'
 def pos_to_coor(pos):
     return str(ord(pos[0]) - 96) + pos[1]
+
+def draw_text(pos: tuple, text: str, font, surface, line_spacing=5):
+    x, y = pos
+
+    for line in text.splitlines():
+        line_surface = font.render(line, True, COLOR['white'])
+        surface.blit(line_surface, (x, y))
+        y += font.get_linesize() + line_spacing
 
 class Button:
     def __init__(
@@ -103,3 +115,55 @@ class Button:
             if self.is_hovered(mouse_pos):
                 return True
         return False
+
+
+import pygame
+
+# Khởi tạo Pygame
+pygame.init()
+
+class TextField:
+    def __init__(self, rect, id, font_size=32, text_color=(255, 255, 255), bg_color=(0, 0, 0), active_color=(0, 255, 0), border_color=(255, 255, 255), border_width=2):
+        self.rect = pygame.Rect(rect)
+        self.id = id
+        self.color_inactive = bg_color
+        self.color_active = active_color
+        self.color = self.color_inactive
+        self.border_color = border_color
+        self.border_width = border_width
+        self.font = pygame.font.Font(None, font_size)
+        self.text = ''
+        self.text_color = text_color
+        self.active = False
+        self.txt_surface = self.font.render(self.text, True, self.text_color)
+        self.has_focus = False
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.active = not self.active  # Đổi trạng thái active
+            else:
+                self.active = False
+                
+            self.color = self.color_active if self.active else self.color_inactive
+
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:
+                    self.text = ''  # Xóa văn bản
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]  # Xóa ký tự cuối
+                else:
+                    self.text += event.unicode  # Thêm ký tự mới vào văn bản
+                # Render lại văn bản
+                self.txt_surface = self.font.render(self.text, True, self.text_color)
+
+    def update(self):
+        width = max(200, self.txt_surface.get_width() + 10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.border_color, self.rect, self.border_width)
+        pygame.draw.rect(screen, self.color, self.rect)
+        screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + (self.rect.height - self.txt_surface.get_height()) // 2))
+

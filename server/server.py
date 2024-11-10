@@ -43,7 +43,7 @@ class Server:
                 msg = client_socket.recv(1024).decode('utf-8')
 
                 if header == 'play':
-                    if msg == 'searching_game':
+                    if msg == 'play_online':
                         self.player_searching_game.append(client_address)
 
                         if len(self.player_searching_game) >= 2:
@@ -54,9 +54,9 @@ class Server:
                                 ])
                             )
                             self.clients[self.player_searching_game[0]].send('play'.encode())
-                            self.clients[self.player_searching_game[0]].send(f'start white {self.get_name(self.player_searching_game[1])}'.encode())
+                            self.clients[self.player_searching_game[0]].send(f'start white {self.get_name(self.player_searching_game[1])} 1000'.encode())
                             self.clients[self.player_searching_game[1]].send('play'.encode())
-                            self.clients[self.player_searching_game[1]].send(f'start black {self.get_name(self.player_searching_game[0])}'.encode())
+                            self.clients[self.player_searching_game[1]].send(f'start black {self.get_name(self.player_searching_game[0])} 1000'.encode())
 
                             self.client_in_game[self.player_searching_game[0]] = True
                             self.client_in_game[self.player_searching_game[1]] = True
@@ -73,7 +73,19 @@ class Server:
                         self.clients[client_address].send('play'.encode())
                         self.clients[client_address].send('start white Computer'.encode())
                         self.client_in_game[client_address] = True
+                    elif msg[:4] == 'chat':
+                        game = self.get_game_from_address(client_address)
+                        player_socket = [self.clients[game.players[0].client_address]]
+                        if not game.play_com:
+                            player_socket.append(self.clients[game.players[1].client_address])
 
+                        for socket in player_socket:
+                            socket.send('play'.encode())
+                            if socket == client_socket:
+                                socket.send((msg[:4] + 'You: ' + msg[4:]).encode())
+                            else:
+                                socket.send((msg[:4] + 'Opponent: ' + msg[4:]).encode())
+                        
                     else:
                         game = self.get_game_from_address(client_address)
 

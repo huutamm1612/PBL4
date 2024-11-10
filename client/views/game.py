@@ -1,7 +1,6 @@
 import pygame
 from .util import *
 
-# wPb4b3 wPb2xe2
 CHESS_POINT = {
     'Q' : 9,
     'B' : 3,
@@ -51,6 +50,8 @@ class Chess(View):
         self.broad_x, self.broad_y = 80, 80
         self.game_rect = pygame.Rect(self.broad_x, self.broad_y, self.broad_widht, self.broad_height)
         self.game_surface = self.surface.subsurface(self.game_rect)
+        self.play_history_rect = pygame.Rect(770, 40, 380, 450)
+        self.play_history_surface = self.surface.subsurface(self.play_history_rect)
         self.font = pygame.font.Font(None, 20)
 
         self.is_white = True
@@ -58,9 +59,25 @@ class Chess(View):
         self.can_move = None
         self.all_move_info = []
         self.opp_info = None
+        self.chat = None
+        self.chat_font = pygame.font.Font(None, 20)
+        self.curr_move = 0
+        self.view_pos = 0
+
+        self.all_move_info_buttons = []
+        self.move_info_buttons = [
+            Button((15, 420, 80, 30), id='first', text='<<', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=3),
+            Button((105, 420, 80, 30), id='prev', text='<', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=3),
+            Button((195, 420, 80, 30), id='next', text='>', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=3),
+            Button((285, 420, 80, 30), id='last', text='>>', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=3)
+        ]
 
         self.buttons = [
             Button((800, 0, 100, 50), id='spin', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
+        ]
+
+        self.text_fields = [
+            TextField((760, 730, 400, 40), id='chat', bg_color=COLOR['chat-color1'], active_color=COLOR['black'], font_size=16)
         ]
 
         self.game_init()
@@ -90,15 +107,58 @@ class Chess(View):
             'R' : 0,
             'Q' : 0,
         }
-
+        
         self.possible_moves = []
         self.possible_takes = []
         self.highlight = []
         self.curr_position = ''
+        self.draw_player_info()
+
+    def set_color(self, color):
+        if color == 'white':
+            self.is_white = True
+            self.is_white_view = True
+            self.can_move = True
+        else:
+            self.is_white = False
+            self.is_white_view = False
+            self.can_move = False
+
+        self.draw_broad()
+    
+    def set_opp(self, opp=None):
+        if len(opp) > 1:
+            self.opp_info = opp
+            self.chat = 'win +10 / draw 0 / lose -10'
+            self.chat_font = pygame.font.Font(None, 20)
+            self.draw_chat_layout()
+        else:
+            self.opp_info = 'computer'
+
+        self.draw_player_info()
+        
+
+    def add_move_info(self, move_info):
+        self.all_move_info.append(move_info)
+        
+        self.curr_move = len(self.all_move_info)
+        self.view_pos = max(0, (self.curr_move + 1) // 2 - 12)
+        
+        x = 30
+        if len(self.all_move_info) % 2 == 0:
+            x = 150
+            
+        if 'O' not in move_info:
+            text = move_info[:2] + move_info[4:]
+        else:
+            text = move_info[1:]
+
+        self.all_move_info_buttons.append(
+            Button((x, 0, 60, 30), id=str(len(self.all_move_info)), text=text, color=COLOR['right-layout-color'], font_size=16)
+        )
 
     def replay(self, move_infos):
         self.game_init()
-
         for move_info in move_infos:
             self.change_broad(move_info)
         
@@ -255,7 +315,6 @@ class Chess(View):
     def remove_chess_piece_at(self, position):
         self.all_chess_pieces = [chess for chess in self.all_chess_pieces if not chess.endswith(position)]
 
-
     def get_mouse_pos(self, mouse_pos):
         mouse_x = mouse_pos[0] - HEADER_WIDTH
         mouse_y = mouse_pos[1]
@@ -286,18 +345,38 @@ class Chess(View):
             
             self.possible_moves = []
             self.possible_takes = []
-
-        self.user.client_socket.send('play'.encode())
-        self.user.client_socket.send(message.encode())
+        
+        if self.can_move and self.curr_move == len(self.all_move_info):
+            self.user.client_socket.send('play'.encode())
+            self.user.client_socket.send(message.encode())
 
         self.draw_broad()
 
-    def draw_player_info(self):
-        opp = 'Computer'
-        if self.opp_info is not None:
-            # opp = user.name + (user.elo)
-            pass
+    def draw_move_info(self):
+        self.play_history_surface.fill(COLOR['right-layout-color'])
+        height = (self.play_history_rect.height - 30) // 12
 
+        for i in range(min(12, (len(self.all_move_info) + 1) // 2)):
+            self.play_history_surface.blit(self.font.render(str(i + self.view_pos + 1) + '.', True, COLOR['white']), (0, height * i + 7))
+
+        y = 0
+        for button in self.all_move_info_buttons[self.view_pos * 2 : (self.view_pos + 12) * 2]:
+            button.y = y
+            button.draw(self.play_history_surface)
+            if int(button.id) % 2 == 0:
+                y += height
+
+        for button in self.move_info_buttons:
+            button.draw(self.play_history_surface)
+
+    def draw_player_info(self):
+        opp = 'Searching...'
+        if self.opp_info is not None:
+            if type(self.opp_info) is list:
+                opp = f'{self.opp_info[0]} ({self.opp_info[1]})'
+            else:
+                opp = 'computer'
+                
         if self.is_white:
             opp_img = 'sw'
             player_img = 'sb'
@@ -306,7 +385,7 @@ class Chess(View):
             player_img = 'sw'
 
         # opponent information
-        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 35, 400, 40))
+        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 35, 500, 45))
         pygame.draw.rect(self.surface, COLOR['avt-black'], (80, 35, 40, 40), border_radius=1)
         self.surface.blit(self.images['bAvt'], (83, 36))
         self.surface.blit(self.font.render(opp, False, COLOR['white']), (130, 35))
@@ -322,14 +401,14 @@ class Chess(View):
 
         if self.point < 0:
             x += 10
-            self.surface.blit(self.font.render(f'+{abs(self.point)}', False, COLOR['white']), (x, 60))
+            self.surface.blit(self.font.render(f'+{abs(self.point)}', True, COLOR['white']), (x, 60))
 
         # player information
-        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 725, 400, 40))
+        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 725, 500, 45))
         pygame.draw.rect(self.surface, COLOR['avt-white'], (80, 725, 40, 40), border_radius=1)
         self.surface.blit(self.images['wAvt'], (83, 726))
         # Player = user.name (user.elo)
-        self.surface.blit(self.font.render('Player', False, COLOR['white']), (130, 725))
+        self.surface.blit(self.font.render(f'{self.user.username} (1000)', True, COLOR['white']), (130, 725))
         pygame.draw.rect(self.surface, COLOR['background-color'], (130, 745, 200, 20))
         x = 130
         for piece, num in self.pieces_taken.items():
@@ -342,7 +421,11 @@ class Chess(View):
             
         if self.point > 0:
             x += 10
-            self.surface.blit(self.font.render(f'+{self.point}', False, COLOR['white']), (x, 750))
+            self.surface.blit(self.font.render(f'+{self.point}', True, COLOR['white']), (x, 750))
+
+    def draw_chat_layout(self):
+        pygame.draw.rect(self.surface, COLOR['chat-color'], (760, 500, 400, 230))
+        draw_text((765, 505), self.chat, self.chat_font, self.surface, 2)
 
     def listener(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -350,15 +433,62 @@ class Chess(View):
             if is_clicked(mouse_pos, self.game_rect):
                 position = self.mouse_pos_to_chess_pos(mouse_pos)
                 self.select_cell(position)
-
+            
+            if event.button == pygame.BUTTON_WHEELDOWN:
+                self.view_pos += 1  # Cuộn xuống
+            elif event.button == pygame.BUTTON_WHEELUP and self.view_pos > 0:
+                self.view_pos -= 1  # Cuộn lên
+        pos = self.get_mouse_pos(pygame.mouse.get_pos())
         for button in self.buttons:
-            if button.is_clicked(event, self.get_mouse_pos(pygame.mouse.get_pos())):
+            if button.is_clicked(event, pos):
                 if button.id == 'spin':
                     self.is_white_view = not self.is_white_view 
                     self.draw_broad()
+        pos = (pos[0] - self.play_history_rect.x, pos[1] - self.play_history_rect.y)
+        for button in self.all_move_info_buttons:
+            if button.is_clicked(event, pos):
+                self.all_move_info_buttons[self.curr_move - 1].color = COLOR['right-layout-color']
+                self.curr_move = int(button.id)
+                self.replay(self.all_move_info[:self.curr_move])
+                self.all_move_info_buttons[self.curr_move - 1].color = COLOR['move-inf']
+
+        for button in self.move_info_buttons:
+            if button.is_clicked(event, pos):
+                self.all_move_info_buttons[self.curr_move - 1].color = COLOR['right-layout-color']
+                if button.id == 'first':
+                    print('asfasd')
+                    self.curr_move = 0
+                elif button.id == 'last':
+                    self.curr_move = len(self.all_move_info)
+                elif button.id == 'prev':
+                    self.curr_move = max(self.curr_move - 1, 0)
+                elif button.id == 'next':
+                    self.curr_move = min(self.curr_move + 1, len(self.all_move_info))
+
+                self.replay(self.all_move_info[:self.curr_move])
+                self.all_move_info_buttons[self.curr_move - 1].color = COLOR['move-inf']
+
+        for text_field in self.text_fields:
+            if text_field.active and event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and text_field.text != '':
+                #
+                self.user.client_socket.send('play'.encode())
+                self.user.client_socket.send(('chat' + text_field.text).encode())
+                print(text_field.text)
+                text_field.text = ''
+            text_field.handle_event(event)
+
 
     def repaint(self):
-        pygame.draw.rect(self.surface, COLOR['header-color'], (760, 30, 400, 740), border_radius=5)
-        for button in self.buttons:
-            button.draw(self.surface)
+        pygame.draw.rect(self.surface, COLOR['right-layout-color'], (760, 30, 400, 740), border_radius=5)
+        
+        if self.chat is not None:
+            self.draw_chat_layout()
+        if self.opp_info is not None:
+            self.draw_move_info()
+            
+            for button in self.buttons:
+                button.draw(self.surface)
+
+            for text_field in self.text_fields:
+                text_field.draw(self.surface)
         

@@ -29,9 +29,7 @@ class Login(View):
         # Khởi tạo vùng fill màu nền
         self.background_rect = pygame.Rect(self.x - 50, self.y - 110, 300, 400)
         
-
     def repaint(self):
-        
         pygame.draw.rect(self.surface, COLOR['header-color'], self.background_rect, border_radius = 10)
      
         title_surface = self.header_font.render("Login to your account", True, (255, 255, 255))
