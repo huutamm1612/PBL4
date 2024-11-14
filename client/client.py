@@ -42,13 +42,16 @@ class MainScreen(View):
         MainScreen.header_buttons.append(
             Button((0, 100, HEADER_WIDTH, 50), id='logout', text='Logout', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
         )
+        
     def click_button_logout(self):
         self.user.logout()
+        self.page.name = "GUEST"
         MainScreen.header_buttons = MainScreen.header_buttons[:2]
         MainScreen.header_buttons.extend([
             Button((0, 100, HEADER_WIDTH, 50), id='login', text='Login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 150, HEADER_WIDTH, 50), id='signup', text='Signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
         ])
+
 
     def repaint_header(self):
         self.header_layout.fill(COLOR['header-color'])
@@ -162,7 +165,9 @@ class Client:
 
                 elif header == 'login':
                     if message == 'ok':
+                        username = self.index.page.username
                         self.index.change_page('home')
+                        self.index.page.name = username
                         MainScreen.click_button_login()
                     elif message == 'no':
                         self.index.page.error_message_login = "Incorrect username or password."
