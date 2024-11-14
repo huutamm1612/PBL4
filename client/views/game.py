@@ -456,7 +456,6 @@ class Chess(View):
             if button.is_clicked(event, pos):
                 self.all_move_info_buttons[self.curr_move - 1].color = COLOR['right-layout-color']
                 if button.id == 'first':
-                    print('asfasd')
                     self.curr_move = 0
                 elif button.id == 'last':
                     self.curr_move = len(self.all_move_info)

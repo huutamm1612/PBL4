@@ -47,7 +47,6 @@ def get_opp_chesses(is_white, matrix: ndarray):
     else:
         opp_chesses = np.where(matrix > 0)
         opp_chesses = list(zip(opp_chesses[0], opp_chesses[1]))
-
     return opp_chesses
 
 # hàm kiểm tra xem quân cờ ở vị trí start có thể di chuyển đến vị trí goal được hay không

@@ -27,7 +27,7 @@ class Login(View):
             Button((self.x, self.y + 240, 200, 20), id='back_login', text='Back to login', text_color=COLOR['href-button-color'], color=COLOR['header-color'], border_radius=0, font_size=16),
         ]
 
-        self.color_inactive = pygame.Color('white')
+        self.color_inactive = COLOR['white']
         self.color_active = COLOR['white-focus']
 
         self.color_username = self.color_inactive
@@ -186,7 +186,7 @@ class Login(View):
             self.color_username = self.color_active if self.active_username else self.color_inactive
             self.color_password = self.color_active if self.active_password else self.color_inactive
             self.color_new_password = self.color_active if self.active_new_password else self.color_inactive
-            self.color_confirm_password = self.color_active if self.color_confirm_password else self.color_inactive
+            self.color_confirm_password = self.color_active if self.active_confirm_password else self.color_inactive
 
         if event.type == pygame.KEYDOWN:
             if self.active_username:
