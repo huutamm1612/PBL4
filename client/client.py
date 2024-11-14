@@ -158,10 +158,7 @@ class Client:
                             self.index.page.draw_broad()
                         
                         else: 
-                            self.index.page.add_move_info(message)
-                            self.index.page.change_broad(message)
-                            self.index.page.draw_broad()
-                            self.index.page.can_move = not self.index.page.can_move
+                            self.index.page.move(message)
 
                 elif header == 'login':
                     if message == 'ok':

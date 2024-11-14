@@ -1,4 +1,6 @@
-d = {1: 2, 2: 3}
+a = [3, 3]
 
-for i, e in enumerate(d):
-    print(i, e)
+
+a[1] -= 1
+
+print(a)

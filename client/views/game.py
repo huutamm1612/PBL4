@@ -54,6 +54,11 @@ class Chess(View):
         self.play_history_surface = self.surface.subsurface(self.play_history_rect)
         self.font = pygame.font.Font(None, 20)
 
+        self.p_time = 600000
+        self.o_time = 600000
+        self.time_font = pygame.font.Font(None, 35)
+        self.pause_time = 0
+        self.start_time = pygame.time.get_ticks()
         self.is_white = True
         self.is_white_view = True
         self.can_move = None
@@ -132,12 +137,27 @@ class Chess(View):
             self.chat = 'win +10 / draw 0 / lose -10'
             self.chat_font = pygame.font.Font(None, 20)
             self.draw_chat_layout()
+            
         else:
             self.opp_info = 'computer'
 
+        self.p_time = 600000
+        self.o_time = 600000
+        self.pause_time = pygame.time.get_ticks()
+        self.start_time = pygame.time.get_ticks()
         self.draw_player_info()
-        
 
+    def move(self, info):
+        if self.can_move:
+            self.p_time -= pygame.time.get_ticks() - self.start_time
+        else:
+            self.o_time -= pygame.time.get_ticks() - self.start_time
+
+        self.add_move_info(info)
+        self.replay(self.all_move_info)
+        self.can_move = not self.can_move
+        self.start_time = pygame.time.get_ticks()
+        
     def add_move_info(self, move_info):
         self.all_move_info.append(move_info)
         
@@ -153,8 +173,11 @@ class Chess(View):
         else:
             text = move_info[1:]
 
+        for button in self.all_move_info_buttons:
+            button.color = COLOR['right-layout-color']
+
         self.all_move_info_buttons.append(
-            Button((x, 0, 60, 30), id=str(len(self.all_move_info)), text=text, color=COLOR['right-layout-color'], font_size=16)
+            Button((x, 0, 60, 30), id=str(len(self.all_move_info)), text=text, color=COLOR['move-inf'], font_size=16)
         )
 
     def replay(self, move_infos):
@@ -188,9 +211,7 @@ class Chess(View):
 
             self.remove_chess_piece_at(start_pos)
             self.remove_chess_piece_at(goal_pos)
-
             self.highlight = [start_pos, goal_pos]
-
             self.all_chess_pieces.append(chess[:2] + goal_pos)
 
         else:
@@ -385,7 +406,7 @@ class Chess(View):
             player_img = 'sw'
 
         # opponent information
-        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 35, 500, 45))
+        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 35, 300, 45))
         pygame.draw.rect(self.surface, COLOR['avt-black'], (80, 35, 40, 40), border_radius=1)
         self.surface.blit(self.images['bAvt'], (83, 36))
         self.surface.blit(self.font.render(opp, False, COLOR['white']), (130, 35))
@@ -404,7 +425,7 @@ class Chess(View):
             self.surface.blit(self.font.render(f'+{abs(self.point)}', True, COLOR['white']), (x, 60))
 
         # player information
-        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 725, 500, 45))
+        pygame.draw.rect(self.surface, COLOR['background-color'], (80, 725, 300, 45))
         pygame.draw.rect(self.surface, COLOR['avt-white'], (80, 725, 40, 40), border_radius=1)
         self.surface.blit(self.images['wAvt'], (83, 726))
         # Player = user.name (user.elo)
@@ -427,6 +448,24 @@ class Chess(View):
         pygame.draw.rect(self.surface, COLOR['chat-color'], (760, 500, 400, 230))
         draw_text((765, 505), self.chat, self.chat_font, self.surface, 2)
 
+    def com_time(self, time):
+        return str(time // 60) + ':' + str(time % 60).zfill(2)
+
+    def draw_time(self):
+        self.pause_time = pygame.time.get_ticks() - self.start_time
+        pygame.draw.rect(self.surface, COLOR['time-color'], (620, 35, 100, 30), border_radius=2)
+        pygame.draw.rect(self.surface, COLOR['time-color'], (620, 725, 100, 30), border_radius=2)
+
+        pt = self.p_time
+        ot = self.o_time
+        if self.can_move:
+            pt = self.p_time - self.pause_time
+        else:
+            ot = self.o_time - self.pause_time
+
+        self.surface.blit(self.time_font.render(self.com_time(ot // 1000), True, COLOR['white']), (640, 38, 100, 30))
+        self.surface.blit(self.time_font.render(self.com_time(pt // 1000), True, COLOR['white']), (640, 728, 100, 30))
+
     def listener(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = self.get_mouse_pos(pygame.mouse.get_pos())
@@ -439,11 +478,11 @@ class Chess(View):
             elif event.button == pygame.BUTTON_WHEELUP and self.view_pos > 0:
                 self.view_pos -= 1  # Cuộn lên
         pos = self.get_mouse_pos(pygame.mouse.get_pos())
-        for button in self.buttons:
-            if button.is_clicked(event, pos):
-                if button.id == 'spin':
-                    self.is_white_view = not self.is_white_view 
-                    self.draw_broad()
+        # for button in self.buttons:
+        #     if button.is_clicked(event, pos):
+        #         if button.id == 'spin':
+        #             self.is_white_view = not self.is_white_view 
+        #             self.draw_broad()
         pos = (pos[0] - self.play_history_rect.x, pos[1] - self.play_history_rect.y)
         for button in self.all_move_info_buttons:
             if button.is_clicked(event, pos):
@@ -477,7 +516,6 @@ class Chess(View):
                 text_field.text = ''
             text_field.handle_event(event)
 
-
     def repaint(self):
         pygame.draw.rect(self.surface, COLOR['right-layout-color'], (760, 30, 400, 740), border_radius=5)
         
@@ -486,9 +524,11 @@ class Chess(View):
         if self.opp_info is not None:
             self.draw_move_info()
             
-            for button in self.buttons:
-                button.draw(self.surface)
+            # for button in self.buttons:
+            #     button.draw(self.surface)
 
             for text_field in self.text_fields:
                 text_field.draw(self.surface)
+
         
+        self.draw_time()
