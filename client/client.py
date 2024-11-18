@@ -189,7 +189,7 @@ class Client:
                 break
         
     def run(self):
-        self.index = MainScreen(self.user)
+        self.index = MainScreen(self.user)      
         self.index.run()
 
 if __name__ == '__main__':

@@ -23,10 +23,11 @@ class Database:
         except mysql.connector.Error as e:
             print(f"Lỗi kết nối đến cơ sở dữ liệu: {e}")
 
-    def check_login(self, username, password):
+    def login(self, username, password):
         query = "SELECT * FROM users WHERE username = %s AND password = %s"
         self.cursor.execute(query, (username, password))
-        return self.cursor.fetchone() is not None
+        result = self.cursor.fetchone()
+        return result
 
     def check_username(self, username):
         query = "SELECT * FROM users WHERE username = %s"
@@ -44,6 +45,7 @@ class Database:
                 return True
             except mysql.connector.Error as e:
                 return False
+
     def update_password(self, username, password):
         query = "update users set password = %s where username = %s"
         self.cursor.execute(query, (password, username))

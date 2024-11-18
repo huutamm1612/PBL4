@@ -119,11 +119,12 @@ class Server:
                             if game.play_com:
                                 threading.Thread(target=self.ai_move, args=(game, player_socket[0]), daemon=True).start()
                 elif header == 'login':
-                    username, password = msg.split(',')                    
-                    if self.database.check_login(username, password):
+                    username, password = msg.split(',')          
+                    result = self.database.login(username, password)       
+                    if result is not None:
                         client_socket.send(header.encode())
                         client_socket.send("ok".encode())
-                    elif self.database.check_login(username, password) == False:                        
+                    else:                        
                         client_socket.send(header.encode())
                         client_socket.send("no".encode())
                 elif header == 'reset_password':
