@@ -77,8 +77,6 @@ def get_all_move(broad, is_white, break_check = [], is_moved=[None, None]):
                         all_move.append([tuple(index), move])
                     elif abs(value) == 1:
                         all_move.append([tuple(index), move])
-
-
     return all_move
 
 def is_check(is_white_move: bool, broad: ndarray):
@@ -307,7 +305,11 @@ class AI:
                 curr_pos = old_pos
 
         if best_move == 0:
-            return 0
+            if len(all_move) != 0:
+                curr_pos = all_move[0][0]
+                best_move = all_move[0][1]
+            else:
+                return 0
         
         return curr_pos, best_move
 
@@ -350,19 +352,26 @@ class AI:
 
 if __name__ == '__main__':
     broad = np.array([
-        [ 0,  0,  0, -1,  0,  0,  0,  0],
+        [ 0,  6,  0,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0,  0,  0,  0],
-        [ 0,  0,  5,  0,  5,  0,  0,  0],
-        [ 0,  0,  0,  0,  3,  0,  0,  0],
+        [ 0,  0,  0,  0,  2,  0,  0,  0],
+        [ 0,  0,  0,  0,  0,  2,  0,  0],
         [ 0,  0,  0,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  6,  0,  0,  0],
-        [ 1,  0,  6,  0,  0,  0,  0,  0],
-        [ 0,  6,  0,  0,  0,  0,  0,  0]
+        [ 0,  6,  0,  0, -1,  0,  0,  0],
+        [ 1,  0,  0,  0, -6,  0,  0,  0],
+        [ 0,  6,  0,  0, -6,  0,  0,  0]
     ])
     start_time = time.time()  # Ghi lại thời gian bắt đầu
-    print(AI.move(broad, [], [None, None]))
+    print(AI.move(broad, [(3, 4), (4, 4), (2, 4)], [None, None]))
     end_time = time.time()  # Ghi lại thời gian kết thúc
-
+    print(get_all_move(broad, False, [(3, 4), (4, 4), (2, 4)]))
     print(end_time - start_time)
     
-    
+        # [ 5  6  0  0 -6  0  0 -5]
+        # [ 0  6  4 -1  0  0 -6  0]
+        # [ 0  6  3  0  0  0 -6  0]
+        # [ 0  0  2  0  0 -6  0  0]
+        # [ 0  0  0  0  0 -6  0  0]
+        # [ 5  6  0  4  0  0 -6 -3]
+        # [ 1  6  0  0  0  0 -6  0]
+        # [ 0  6  0  0  0  0 -6 -5]

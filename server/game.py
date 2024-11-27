@@ -292,6 +292,7 @@ class Game:
         try:
             start, goal = AI.move(self.matrix, self.break_check, is_moved)
         except:
+            print(AI.move(self.matrix, self.break_check, is_moved))
             print(self.matrix, self.break_check, is_moved)
             
         chess_piece = self.get_chess_piece_from_pos(start)

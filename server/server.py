@@ -62,7 +62,7 @@ class Server:
                             self.client_in_game[self.player_searching_game[1]] = True
 
                             self.player_searching_game = self.player_searching_game[2:]
-                    
+
                     elif msg == 'play_computer':
                         self.games.append(
                             Game([
@@ -73,6 +73,7 @@ class Server:
                         self.clients[client_address].send('play'.encode())
                         self.clients[client_address].send('start white Computer'.encode())
                         self.client_in_game[client_address] = True
+
                     elif msg[:4] == 'chat':
                         game = self.get_game_from_address(client_address)
                         player_socket = [self.clients[game.players[0].client_address]]
@@ -116,8 +117,15 @@ class Server:
                                     socket.send('play'.encode())
                                     socket.send(move_info.encode())
 
+                            if '#' in move_info:
+                                self.client_in_game[self.clients[game.players[0].client_address]] = False
+                                if len(player_socket) == 2:
+                                    self.client_in_game[self.clients[game.players[1].client_address]] = False
+                                self.games.remove(game)
+
                             if game.play_com:
                                 threading.Thread(target=self.ai_move, args=(game, player_socket[0]), daemon=True).start()
+
                 elif header == 'login':
                     username, password = msg.split(',')                    
                     if self.database.check_login(username, password):
@@ -156,7 +164,6 @@ class Server:
         move_info = game.ai_move()
         socket.send('play'.encode())
         socket.send(move_info.encode())
-
 
     def encode_pos(self, *poses):
         li = []
