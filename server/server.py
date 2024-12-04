@@ -99,6 +99,7 @@ class Server:
                             player_socket.append(self.clients[game.players[1].client_address])
                             if game.players[1].client_address == client_address:
                                 winner == 'wwin#'
+
                         for socket in player_socket:
                             socket.send('play'.encode())
                             socket.send(winner.encode())
@@ -107,16 +108,23 @@ class Server:
                         game = self.get_game_from_address(client_address)
                         if client_address == game.players[0].client_address:
                             self.clients[game.players[1].client_address].send('play'.encode())
-                            self.clients[game.palyers[1].client_address].send('wanna draw'.encode())
+                            self.clients[game.players[1].client_address].send('wanna draw'.encode())
                         else:
                             self.clients[game.players[0].client_address].send('play'.encode())
-                            self.clients[game.palyers[0].client_address].send('wanna draw'.encode())
+                            self.clients[game.players[0].client_address].send('wanna draw'.encode())
 
                     elif msg == 'accept draw':
+
                         pass
 
-                    elif msg == 'reject draw':
-                        pass
+                    elif msg == 'decline draw':
+                        game = self.get_game_from_address(client_address)
+                        if client_address == game.players[0].client_address:
+                            self.clients[game.players[1].client_address].send('play'.encode())
+                            self.clients[game.players[1].client_address].send('decline draw'.encode())
+                        else:
+                            self.clients[game.players[0].client_address].send('play'.encode())
+                            self.clients[game.players[0].client_address].send('decline draw'.encode())
                     
                     else:
                         game = self.get_game_from_address(client_address)
@@ -149,9 +157,26 @@ class Server:
                                     socket.send(move_info.encode())
 
                             if '#' in move_info:
+                                if len(player_socket) == 2:
+                                    if 'w' == move_info[0]:
+                                        user = self.client_logined[game.players[0].client_address]
+                                        if user is not None:
+                                            self.database.change_elo(user[0], user[-1] + 10)
+                                        user = self.client_logined[game.players[1].client_address]
+                                        if user is not None:
+                                            self.database.change_elo(user[0], user[-1] - 10)
+                                    else:
+                                        user = self.client_logined[game.players[1].client_address]
+                                        if user is not None:
+                                            self.database.change_elo(user[0], user[-1] + 10)
+                                        user = self.client_logined[game.players[0].client_address]
+                                        if user is not None:
+                                            self.database.change_elo(user[0], user[-1] - 10)
+
                                 self.client_in_game[self.clients[game.players[0].client_address]] = False
                                 if len(player_socket) == 2:
                                     self.client_in_game[self.clients[game.players[1].client_address]] = False
+
 
                                 self.games.remove(game)
 
