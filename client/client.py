@@ -45,7 +45,6 @@ class MainScreen(View):
         
     def click_button_logout(self):
         self.user.logout()
-        self.page.name = "GUEST"
         MainScreen.header_buttons = MainScreen.header_buttons[:2]
         MainScreen.header_buttons.extend([
             Button((0, 100, HEADER_WIDTH, 50), id='login', text='Login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
@@ -69,6 +68,8 @@ class MainScreen(View):
             if button.is_clicked(event, mouse_pos):
                 if button.id == 'logout':
                     self.click_button_logout()
+                    self.user.client_socket.send('logout'.encode())
+                    self.user.client_socket.send('logout'.encode())
                 else:
                     self.active_button = button
                     self.change_page(button.id)
@@ -134,7 +135,7 @@ class Client:
         
         self.receive_thread = threading.Thread(target=self.receive_messages, daemon=True)
         self.receive_thread.start()
-        
+
     def receive_messages(self):
         while True:
             try:
@@ -145,11 +146,16 @@ class Client:
                 except:
                     message = pickle.loads(message)
 
+                # self.index.page is Game
                 if header == 'play':
                     if 'start' in message:
                         info = message.split()
                         self.index.page.set_color(info[1])
                         self.index.page.set_opp(info[2:])
+                    
+                    elif message == 'wanna draw':
+                        
+                        pass
 
                     elif message[:4] == 'chat':
                         self.index.page.chat += '\n' + message[4:]
@@ -164,10 +170,11 @@ class Client:
                             self.index.page.move(message)
 
                 elif header == 'login':
-                    if message == 'ok':
-                        username = self.index.page.username
+                    if message[:2] == 'ok':
+                        self.index.page.user.username = self.index.page.username
+                        self.index.page.user.password = self.index.page.password
                         self.index.change_page('home')
-                        self.index.page.name = username
+                        self.index.page.user.elo = int(message.split()[1])
                         MainScreen.click_button_login()
                     elif message == 'no':
                         self.index.page.error_message_login = "Incorrect username or password."

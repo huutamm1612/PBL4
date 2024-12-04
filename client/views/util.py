@@ -26,7 +26,8 @@ COLOR = {
     'chat-color1' : (30, 30, 30),
     'right-layout-color' : (38, 37, 34),
     'move-inf' : (52,51,58),
-    'time-color' : (43,41,38)
+    'time-color' : (43,41,38),
+    'mate-color' : (211,108,80)
 }
 
 WIDTH = 1500

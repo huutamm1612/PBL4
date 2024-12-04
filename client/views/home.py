@@ -5,7 +5,6 @@ class HomePage(View):
     broad_img = resize(pygame.image.load('client/images/broad_img.png'), (550, 550))
     def __init__(self, user: User, surface: pygame.Surface = None) -> None:
         super().__init__(user, surface)
-        self.name = 'GUEST'
         self.buttons = [
             Button((800, 200, 200, 100), id='Play Online', text='Play Online', color=COLOR['green-button-color'], hover_color=COLOR[ 'green-button_hover-color'], border_radius=1),
             Button((800, 400, 200, 100), id='Play Computer', text='Play Computer', color=COLOR['gray-button-color'], hover_color=COLOR[ 'gray-button_hover-color'], border_radius=1),
@@ -14,7 +13,7 @@ class HomePage(View):
 
     def repaint(self):
         self.surface.fill(COLOR['background-color'])
-        title_surface = self.header_font.render(self.name, True, (255, 255, 255))
+        title_surface = self.header_font.render(self.user.username, True, (255, 255, 255))
         text_width = title_surface.get_width()
         screen_width = self.surface.get_width()
         x_position = screen_width - text_width - 20  

@@ -33,8 +33,11 @@ class Server:
         return None
     
     def get_name(self, client_address):
-        if client_address not in self.client_logined:
-            return 'Guest'
+        if self.client_logined[client_address] is None:
+            return 'Guest 1000'
+        else:
+            print(self.client_logined[client_address])
+            return self.client_logined[client_address][1] + ' ' + str(self.client_logined[client_address][-1])
         
     def handle_client(self, client_socket, client_address):
         while True:
@@ -54,15 +57,15 @@ class Server:
                                 ])
                             )
                             self.clients[self.player_searching_game[0]].send('play'.encode())
-                            self.clients[self.player_searching_game[0]].send(f'start white {self.get_name(self.player_searching_game[1])} 1000'.encode())
+                            self.clients[self.player_searching_game[0]].send(f'start white {self.get_name(self.player_searching_game[1])}'.encode())
                             self.clients[self.player_searching_game[1]].send('play'.encode())
-                            self.clients[self.player_searching_game[1]].send(f'start black {self.get_name(self.player_searching_game[0])} 1000'.encode())
+                            self.clients[self.player_searching_game[1]].send(f'start black {self.get_name(self.player_searching_game[0])}'.encode())
 
                             self.client_in_game[self.player_searching_game[0]] = True
                             self.client_in_game[self.player_searching_game[1]] = True
 
                             self.player_searching_game = self.player_searching_game[2:]
-                    
+
                     elif msg == 'play_computer':
                         self.games.append(
                             Game([
@@ -73,6 +76,7 @@ class Server:
                         self.clients[client_address].send('play'.encode())
                         self.clients[client_address].send('start white Computer'.encode())
                         self.client_in_game[client_address] = True
+
                     elif msg[:4] == 'chat':
                         game = self.get_game_from_address(client_address)
                         player_socket = [self.clients[game.players[0].client_address]]
@@ -86,6 +90,34 @@ class Server:
                             else:
                                 socket.send((msg[:4] + 'Opponent: ' + msg[4:]).encode())
                         
+                    elif msg == 'resign':
+                        game = self.get_game_from_address(client_address)
+                        winner = 'bwin#'
+
+                        player_socket = [self.clients[game.players[0].client_address]]
+                        if not game.play_com:
+                            player_socket.append(self.clients[game.players[1].client_address])
+                            if game.players[1].client_address == client_address:
+                                winner == 'wwin#'
+                        for socket in player_socket:
+                            socket.send('play'.encode())
+                            socket.send(winner.encode())
+
+                    elif msg == 'draw':
+                        game = self.get_game_from_address(client_address)
+                        if client_address == game.players[0].client_address:
+                            self.clients[game.players[1].client_address].send('play'.encode())
+                            self.clients[game.palyers[1].client_address].send('wanna draw'.encode())
+                        else:
+                            self.clients[game.players[0].client_address].send('play'.encode())
+                            self.clients[game.palyers[0].client_address].send('wanna draw'.encode())
+
+                    elif msg == 'accept draw':
+                        pass
+
+                    elif msg == 'reject draw':
+                        pass
+                    
                     else:
                         game = self.get_game_from_address(client_address)
 
@@ -116,14 +148,23 @@ class Server:
                                     socket.send('play'.encode())
                                     socket.send(move_info.encode())
 
+                            if '#' in move_info:
+                                self.client_in_game[self.clients[game.players[0].client_address]] = False
+                                if len(player_socket) == 2:
+                                    self.client_in_game[self.clients[game.players[1].client_address]] = False
+
+                                self.games.remove(game)
+
                             if game.play_com:
                                 threading.Thread(target=self.ai_move, args=(game, player_socket[0]), daemon=True).start()
+
                 elif header == 'login':
                     username, password = msg.split(',')          
-                    result = self.database.login(username, password)       
+                    result = self.database.login(username, password)
                     if result is not None:
                         client_socket.send(header.encode())
-                        client_socket.send("ok".encode())
+                        client_socket.send(f"ok {result[-1]}".encode())
+                        self.client_logined[client_address] = result
                     else:                        
                         client_socket.send(header.encode())
                         client_socket.send("no".encode())
@@ -145,9 +186,15 @@ class Server:
                     else:
                         client_socket.send(header.encode())
                         client_socket.send("DKno".encode())
+                elif header == 'logout':
+                    self.client_logined[client_address] = None
         
             except ConnectionResetError:
                 print(f"[-] Connection lost from {client_address}")
+                self.clients.pop(client_address)
+                #
+                self.client_in_game.pop(client_address)
+                self.client_logined.pop(client_address)
                 break
 
         client_socket.close()
@@ -157,7 +204,6 @@ class Server:
         move_info = game.ai_move()
         socket.send('play'.encode())
         socket.send(move_info.encode())
-
 
     def encode_pos(self, *poses):
         li = []
@@ -174,6 +220,7 @@ class Server:
                 client_socket, client_address = self.server_socket.accept()
                 self.clients[client_address] = client_socket
                 self.client_in_game[client_address] = False
+                self.client_logined[client_address] = None
                 print(f"[+] New connection from {client_address}")
 
                 threading.Thread(target=self.handle_client, args=(client_socket, client_address), daemon=True).start()
