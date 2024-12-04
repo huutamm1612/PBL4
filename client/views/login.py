@@ -75,8 +75,6 @@ class Login(View):
             password_text_surface = self.font.render('*' * len(self.password), True, COLOR['black'])
             self.surface.blit(password_text_surface, (self.input_box_password.x + 5, self.input_box_password.y + 10))
             
-
-
             for btn in self.buttons:
                 if btn.id == "login":
                     btn.draw(self.surface)

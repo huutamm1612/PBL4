@@ -80,6 +80,7 @@ class Chess(View):
 
         self.buttons = [
             #Button((800, 0, 100, 50), id='spin', text='Home', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
+            Button((765, 505, 100, 50), id='resign', text='Resign', font_size=15, color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
         ]
 
         self.text_fields = [
@@ -138,6 +139,9 @@ class Chess(View):
             self.chat = 'win +10 / draw 0 / lose -10'
             self.chat_font = pygame.font.Font(None, 20)
             self.draw_chat_layout()
+            self.buttons.append(
+                Button((860, 505, 100, 50), id='draw', text='Draw', font_size=15, color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
+            )
             
         else:
             self.opp_info = 'computer'
@@ -149,20 +153,30 @@ class Chess(View):
         self.draw_player_info()
 
     def move(self, info):
-        if self.can_move:
-            self.p_time -= pygame.time.get_ticks() - self.start_time
-        else:
-            self.o_time -= pygame.time.get_ticks() - self.start_time
-
-        self.add_move_info(info)
-        self.replay(self.all_move_info)
-        self.can_move = not self.can_move
-        self.start_time = pygame.time.get_ticks()
-
         if '#' in info:
+            print(info)
             self.can_move = None
             self.is_white_checkmate = info[0] == 'w'
             self.draw_broad()
+
+        if 'win' not in info:
+            if self.can_move:
+                self.p_time -= pygame.time.get_ticks() - self.start_time
+            else:
+                self.o_time -= pygame.time.get_ticks() - self.start_time
+
+            self.add_move_info(info)
+            self.replay(self.all_move_info)
+            self.can_move = not self.can_move
+            self.start_time = pygame.time.get_ticks()
+
+
+    
+    # def set_end_game(self, result):
+    #     self.can_move = None
+    #     self.is_white_checkmate = (result == 'win' and self.is_white)
+        
+    #     self.draw_broad()
         
     def add_move_info(self, move_info):
         self.all_move_info.append(move_info)
@@ -279,7 +293,7 @@ class Chess(View):
 
         if self.curr_position != '':
             self.highlight_broad(self.curr_position)
-            
+        
         for hl in self.highlight:
             self.highlight_broad(hl)
 
@@ -445,7 +459,7 @@ class Chess(View):
         pygame.draw.rect(self.surface, COLOR['avt-white'], (80, 725, 40, 40), border_radius=1)
         self.surface.blit(self.images['wAvt'], (83, 726))
         # Player = user.name (user.elo)
-        self.surface.blit(self.font.render(f'{self.user.username} (1000)', True, COLOR['white']), (130, 725))
+        self.surface.blit(self.font.render(f'{self.user.username} ({self.user.elo})', True, COLOR['white']), (130, 725))
         pygame.draw.rect(self.surface, COLOR['background-color'], (130, 745, 200, 20))
         x = 130
         for piece, num in self.pieces_taken.items():
@@ -462,7 +476,7 @@ class Chess(View):
 
     def draw_chat_layout(self):
         pygame.draw.rect(self.surface, COLOR['chat-color'], (760, 500, 400, 230))
-        draw_text((765, 505), self.chat, self.chat_font, self.surface, 2)
+        draw_text((765, 555), self.chat, self.chat_font, self.surface, 2)
 
     def com_time(self, time):
         return str(time // 60) + ':' + str(time % 60).zfill(2)
@@ -500,6 +514,10 @@ class Chess(View):
                 if button.id == 'spin':
                     self.is_white_view = not self.is_white_view 
                     self.draw_broad()
+                if button.id == 'resign':
+                    print('resign')
+                    self.user.client_socket.send('play'.encode())
+                    self.user.client_socket.send('resign'.encode())
 
         pos = (pos[0] - self.play_history_rect.x, pos[1] - self.play_history_rect.y)
         for button in self.all_move_info_buttons:
