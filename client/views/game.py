@@ -158,6 +158,15 @@ class Chess(View):
             self.can_move = None
             self.is_white_checkmate = info[0] == 'w'
             self.draw_broad()
+            
+            if self.opp_info is not None:
+                if self.is_white_checkmate and self.is_white:
+                    self.opp_info[1] = str(int(self.opp_info[1]) - 10)
+                    self.user.elo += 10
+                else:
+                    self.opp_info[1] = str(int(self.opp_info[1]) + 10)
+                    self.user.elo -= 10
+                self.draw_player_info()
 
         if 'win' not in info:
             if self.can_move:
@@ -170,6 +179,14 @@ class Chess(View):
             self.can_move = not self.can_move
             self.start_time = pygame.time.get_ticks()
 
+    def opp_wanna_draw(self):
+        self.buttons = self.buttons[:-1]
+        self.buttons.append(
+            Button((860, 505, 100, 50), id='accept', text='Accept', font_size=15, color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
+        )
+        self.buttons.append(
+            Button((960, 505, 100, 50), id='decline', text='Decline', font_size=15, color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
+        )
 
     
     # def set_end_game(self, result):
@@ -514,10 +531,26 @@ class Chess(View):
                 if button.id == 'spin':
                     self.is_white_view = not self.is_white_view 
                     self.draw_broad()
-                if button.id == 'resign':
+                elif button.id == 'resign':
                     print('resign')
                     self.user.client_socket.send('play'.encode())
                     self.user.client_socket.send('resign'.encode())
+                elif button.id == 'draw':
+                    print('draw')
+                    self.user.client_socket.send('play'.encode())
+                    self.user.client_socket.send('draw'.encode())
+                elif button.id == 'accept':
+                    print('accept draw')
+                    self.user.client_socket.send('play'.encode())
+                    self.user.client_socket.send('accept draw'.encode())
+                elif button.id == 'decline':
+                    print('decline draw')
+                    self.user.client_socket.send('play'.encode())
+                    self.user.client_socket.send('decline draw'.encode())
+                    self.buttons = self.buttons[:-2]
+                    self.buttons.append(
+                        Button((860, 505, 100, 50), id='draw', text='Draw', font_size=15, color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
+                    )
 
         pos = (pos[0] - self.play_history_rect.x, pos[1] - self.play_history_rect.y)
         for button in self.all_move_info_buttons:
@@ -558,7 +591,6 @@ class Chess(View):
             self.draw_chat_layout()
         if self.opp_info is not None:
             self.draw_move_info()
-            
             for button in self.buttons:
                 button.draw(self.surface)
 

@@ -24,8 +24,9 @@ class Database:
             print(f"Lỗi kết nối đến cơ sở dữ liệu: {e}")
 
     def change_elo(self, id, new_elo):
-        query = 'UPDATE users SET elo = %s WHERE id = %s'
-        self.cursor.execute(query, (id, new_elo))
+        query = f'UPDATE users SET elo = {new_elo} WHERE id = {id}'
+        print(query)
+        self.cursor.execute(query)
         self.conn.commit()
 
     def login(self, username, password):

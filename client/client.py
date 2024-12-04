@@ -154,8 +154,11 @@ class Client:
                         self.index.page.set_opp(info[2:])
                     
                     elif message == 'wanna draw':
-                        
-                        pass
+                        self.index.page.chat += '\n' + 'Opponent wanna draw!'
+                        self.index.page.opp_wanna_draw()
+
+                    elif message == 'decline draw':
+                        self.index.page.chat += '\n' + 'Opponent refused to draw!'
 
                     elif message[:4] == 'chat':
                         self.index.page.chat += '\n' + message[4:]
