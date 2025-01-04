@@ -203,5 +203,5 @@ class Client:
         self.index.run()
 
 if __name__ == '__main__':
-    client = Client()
+    client = Client('10.10.76.31')
     client.run()

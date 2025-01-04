@@ -29,7 +29,6 @@ class Player:
         self.is_white = is_white
         self.username = username
 
-        # quân cờ đang chọn
         self.curr = ()
 
 class Game:
@@ -37,7 +36,7 @@ class Game:
         self.game_init()
         
         self.all_move_info = []
-        self.players = players # 0: white, 1: black
+        self.players = players 
         self.time = time
         self.play_com = play_com
         self.break_check = []

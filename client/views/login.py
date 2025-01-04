@@ -91,7 +91,7 @@ class Login(View):
             pygame.draw.rect(self.surface, COLOR['header-color'], self.background_forgotPassword_rect, border_radius=10)
             
             title_surface = self.header_font.render("Forgot password", True, (255, 255, 255))
-            self.surface.blit(title_surface, (self.x - 10, self.y - 60))
+            self.surface.blit(title_surface, (self.x + 10, self.y - 60))
 
             username_surface = self.small_font.render("Username:", True, (255, 255, 255))
             self.surface.blit(username_surface, (self.x, self.y - 15))
