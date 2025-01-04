@@ -99,6 +99,7 @@ class Server:
                             player_socket.append(self.clients[game.players[1].client_address])
                             if game.players[1].client_address == client_address:
                                 winner == 'wwin#'
+                        self.games.remove(game)
 
                         for socket in player_socket:
                             socket.send('play'.encode())
@@ -114,8 +115,12 @@ class Server:
                             self.clients[game.players[0].client_address].send('wanna draw'.encode())
 
                     elif msg == 'accept draw':
-
-                        pass
+                        game = self.get_game_from_address(client_address)
+                        self.clients[game.players[1].client_address].send('play'.encode())
+                        self.clients[game.players[1].client_address].send('draw'.encode())
+                        self.clients[game.players[0].client_address].send('play'.encode())
+                        self.clients[game.players[0].client_address].send('draw'.encode())
+                        self.games.remove(game)
 
                     elif msg == 'decline draw':
                         game = self.get_game_from_address(client_address)
@@ -177,7 +182,6 @@ class Server:
                                 if len(player_socket) == 2:
                                     self.client_in_game[self.clients[game.players[1].client_address]] = False
 
-
                                 self.games.remove(game)
 
                             if game.play_com:
@@ -216,8 +220,26 @@ class Server:
         
             except ConnectionResetError:
                 print(f"[-] Connection lost from {client_address}")
+                game = self.get_game_from_address(client_address)
+                try: 
+                    if game is not None:
+                        winner = 'wwin#'
+                        player_socket = [self.clients[game.players[0].client_address]]
+                        player_socket.append(self.clients[game.players[1].client_address])
+                        if game.players[1].client_address == client_address:
+                            winner == 'bwin#'
+                        self.games.remove(game)
+
+                        for socket in player_socket:
+                            try:
+                                socket.send('play'.encode())
+                                socket.send(winner.encode())
+                            except:
+                                pass
+                except:
+                    pass
+
                 self.clients.pop(client_address)
-                #
                 self.client_in_game.pop(client_address)
                 self.client_logined.pop(client_address)
                 break
@@ -263,5 +285,5 @@ class Server:
             client_socket.close()
 
 if __name__ == '__main__':
-    server = Server()
+    server = Server('10.10.76.31')
     server.run()

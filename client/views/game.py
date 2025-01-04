@@ -69,6 +69,7 @@ class Chess(View):
         self.chat_font = pygame.font.Font(None, 20)
         self.curr_move = 0
         self.view_pos = 0
+        self.is_ended = False
 
         self.all_move_info_buttons = []
         self.move_info_buttons = [
@@ -187,17 +188,13 @@ class Chess(View):
         self.buttons.append(
             Button((960, 505, 100, 50), id='decline', text='Decline', font_size=15, color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1)
         )
-
-    
-    # def set_end_game(self, result):
-    #     self.can_move = None
-    #     self.is_white_checkmate = (result == 'win' and self.is_white)
-        
-    #     self.draw_broad()
         
     def add_move_info(self, move_info):
         self.all_move_info.append(move_info)
         
+        if '#' in move_info:
+                self.is_ended = True
+
         self.curr_move = len(self.all_move_info)
         self.view_pos = max(0, (self.curr_move + 1) // 2 - 12)
         
@@ -389,6 +386,9 @@ class Chess(View):
         return (mouse_x, mouse_y)
     
     def select_cell(self, position):
+        if self.is_ended:
+            return
+        
         message = ''
         self.curr_position = ''
         chess_piece = self.get_chess_piece(position)

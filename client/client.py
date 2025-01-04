@@ -84,6 +84,12 @@ class MainScreen(View):
         pass
 
     def change_page(self, page):
+        print(self.page)
+        print(self.page is Chess)
+        if type(self.page) is Chess and len(self.page.all_move_info) != 0:
+            self.page.user.client_socket.send('play'.encode())
+            self.page.user.client_socket.send('resign'.encode())
+
         if page == 'home':
             self.surface.fill(COLOR['background-color'])
             self.page = HomePage(self.user, self.surface)
@@ -146,12 +152,14 @@ class Client:
                 except:
                     message = pickle.loads(message)
 
-                # self.index.page is Game
                 if header == 'play':
                     if 'start' in message:
                         info = message.split()
                         self.index.page.set_color(info[1])
                         self.index.page.set_opp(info[2:])
+
+                    elif message == 'draw':
+                        self.index.page.chat += '\n' + 'This game is draw!'
                     
                     elif message == 'wanna draw':
                         self.index.page.chat += '\n' + 'Opponent wanna draw!'
@@ -203,5 +211,5 @@ class Client:
         self.index.run()
 
 if __name__ == '__main__':
-    client = Client()
+    client = Client('10.10.76.31')
     client.run()
