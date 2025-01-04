@@ -159,7 +159,7 @@ class Chess(View):
             self.can_move = None
             self.is_white_checkmate = info[0] == 'w'
             self.draw_broad()
-            print(self.is_white_checkmate, self.is_white)
+
             if self.opp_info is not None:
                 if (self.is_white and self.is_white_checkmate) or (not self.is_white and not self.is_white_checkmate):
                     self.opp_info[1] = str(int(self.opp_info[1]) - 10)
@@ -168,6 +168,8 @@ class Chess(View):
                     self.opp_info[1] = str(int(self.opp_info[1]) + 10)
                     self.user.elo -= 10
                 self.draw_player_info()
+
+            self.is_ended = True
 
         if 'win' not in info:
             if self.can_move:
@@ -193,7 +195,7 @@ class Chess(View):
         self.all_move_info.append(move_info)
         
         if '#' in move_info:
-                self.is_ended = True
+            self.is_ended = True
 
         self.curr_move = len(self.all_move_info)
         self.view_pos = max(0, (self.curr_move + 1) // 2 - 12)
@@ -532,19 +534,15 @@ class Chess(View):
                     self.is_white_view = not self.is_white_view 
                     self.draw_broad()
                 elif button.id == 'resign':
-                    print('resign')
                     self.user.client_socket.send('play'.encode())
                     self.user.client_socket.send('resign'.encode())
                 elif button.id == 'draw':
-                    print('draw')
                     self.user.client_socket.send('play'.encode())
                     self.user.client_socket.send('draw'.encode())
                 elif button.id == 'accept':
-                    print('accept draw')
                     self.user.client_socket.send('play'.encode())
                     self.user.client_socket.send('accept draw'.encode())
                 elif button.id == 'decline':
-                    print('decline draw')
                     self.user.client_socket.send('play'.encode())
                     self.user.client_socket.send('decline draw'.encode())
                     self.buttons = self.buttons[:-2]
@@ -580,7 +578,6 @@ class Chess(View):
                 #
                 self.user.client_socket.send('play'.encode())
                 self.user.client_socket.send(('chat' + text_field.text).encode())
-                print(text_field.text)
                 text_field.text = ''
             text_field.handle_event(event)
 

@@ -33,7 +33,6 @@ class MainScreen(View):
             Button((0, 50, HEADER_WIDTH, 50), id='play', text='Play', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 100, HEADER_WIDTH, 50), id='login', text='Login', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
             Button((0, 150, HEADER_WIDTH, 50), id='signup', text='Signup', color=COLOR['header-color'], hover_color=COLOR['header-button-color'], border_radius=1),
-    
         ]
 
     @staticmethod
@@ -84,9 +83,7 @@ class MainScreen(View):
         pass
 
     def change_page(self, page):
-        print(self.page)
-        print(self.page is Chess)
-        if type(self.page) is Chess and len(self.page.all_move_info) != 0:
+        if type(self.page) is Chess and not self.page.is_ended:
             self.page.user.client_socket.send('play'.encode())
             self.page.user.client_socket.send('resign'.encode())
 
@@ -115,6 +112,9 @@ class MainScreen(View):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    if type(self.page) is Chess and not self.page.is_ended:
+                        self.page.user.client_socket.send('play'.encode())
+                        self.page.user.client_socket.send('resign'.encode())
                 
                 self.listener_button(event)
                 page = self.page.listener(event)
