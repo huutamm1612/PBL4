@@ -159,9 +159,9 @@ class Chess(View):
             self.can_move = None
             self.is_white_checkmate = info[0] == 'w'
             self.draw_broad()
-            
+            print(self.is_white_checkmate, self.is_white)
             if self.opp_info is not None:
-                if self.is_white_checkmate and self.is_white:
+                if (self.is_white and self.is_white_checkmate) or (not self.is_white and not self.is_white_checkmate):
                     self.opp_info[1] = str(int(self.opp_info[1]) - 10)
                     self.user.elo += 10
                 else:

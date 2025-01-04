@@ -23,8 +23,8 @@ class Database:
         except mysql.connector.Error as e:
             print(f"Lỗi kết nối đến cơ sở dữ liệu: {e}")
 
-    def change_elo(self, id, new_elo):
-        query = f'UPDATE users SET elo = {new_elo} WHERE id = {id}'
+    def change_elo(self, username, new_elo):
+        query = f"UPDATE users SET elo = {new_elo} WHERE username = '{username}'"
         print(query)
         self.cursor.execute(query)
         self.conn.commit()
